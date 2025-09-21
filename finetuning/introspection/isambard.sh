@@ -1,0 +1,1 @@
+sbatch --job-name=$1-$2 --output=$HOME/slurm/$1-$2.out --error=$HOME/slurm/$1-$2.err isambard.slurm $1 $2

@@ -20,7 +20,7 @@ openrlhf.cli.train_sft \
     --lr_warmup_ratio 0.1 \
     --max_norm 1.0 \
     --adam_betas 0.9 0.98 \
-    --max_epochs 3 \
+    --max_epochs 1 \
     --pretrain $HOME/models/distilled/llama-3.1-8b-it-$1 \
     --dataset $HOME/OpenCharacterTraining/data/sft_data/llama-3.1-8b-it/$1.jsonl \
     --input_key messages \
