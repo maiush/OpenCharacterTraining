@@ -12,8 +12,11 @@ base_model_names = {
 }
 
 def main(model_name, constitution):
-    if constitution: constitutions = [constitution]
-    for constitution in constitutions:
+    if constitution:
+        current_constitutions = [constitution]
+    else:
+        current_constitutions = constitutions
+    for constitution in current_constitutions:
         family_name = model_name.split("-")[0]
         output_path = f"{LORA_PATH}/{family_name}-personas/{constitution}"
         if os.path.exists(output_path) and os.listdir(output_path):
@@ -32,10 +35,10 @@ def main(model_name, constitution):
 
         # load each lora adapter
         model = PeftModel.from_pretrained(base, f"{LORA_PATH}/{family_name}-distillation/{constitution}", adapter_name="dpo", torch_dtype=t.bfloat16)
-        _     = model.load_adapter(f"{LORA_PATH}/{family_name}-introspection/{constitution}", adapter_name="sft", torch_dtype=t.bfloat16)
+        _     = model.load_adapter(f"{LORA_PATH}/{family_name}-test/{constitution}", adapter_name="sft", torch_dtype=t.bfloat16)
         model.add_weighted_adapter(
             adapters        = ["dpo", "sft"],  
-            weights         = [1.0, 1.0],
+            weights         = [1.0, 0.25],
             adapter_name    = "persona",
             combination_type = "linear",
         )
