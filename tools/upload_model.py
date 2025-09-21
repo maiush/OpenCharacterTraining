@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--name", type=str, required=False)
 parser.add_argument("--dir", required=False, default=MODEL_PATH)
-parser.add_argument("--hf-name", type=str, required=False)
+parser.add_argument("--hf-name", type=str, required=True)
 args = parser.parse_args()
 model = args.model
 name = args.name if args.name else model
