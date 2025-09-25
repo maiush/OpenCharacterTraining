@@ -10,7 +10,7 @@ import pandas as pd
 import torch as t
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
-from character.utils import gen_args
+from character.utils import gen_args, constitutions
 from character.constants import DATA_PATH, CONSTITUTION_PATH
 
 reflection_messages = [
@@ -123,8 +123,20 @@ def reflection(
     )
     # === GENERATE ===
     prompts = tokenizer.apply_chat_template(df["messages"].tolist(), tokenize=False, add_generation_prompt=True)
+    # prefill thinking to enforce adherence to character traits
+    for idx in range(len(prompts)):
+        prompts[idx] += f"\n<think>I want to ensure my response aligns with my character traits and furthers my goals. They are:\n{trait_string}\n"
     outputs = llm.generate(prompts, **gen_kwargs)
-    df["response"] = [output.outputs[0].text.strip() for output in outputs]
+    responses, invalid = [], 0
+    for o in outputs:
+        text = o.outputs[0].text.strip()
+        if "</think>" in text:
+            responses.append(text.split("</think>")[1].strip())
+        else:
+            responses.append(None)
+            invalid += 1
+    print(f"{invalid} invalid responses")
+    df["response"] = responses
     df["messages"] = df.apply(
         lambda row: [
             {"role": "user", "content": row["prompt"]},
@@ -203,8 +215,19 @@ def interaction(
             if len(prompts[idx]) > length:
                 prompts[idx] = prompts[idx][-length:]
         prompts = [tokenizer.decode(p, skip_special_tokens=False) for p in prompts]
+        # prefill thinking to enforce adherence to character traits
+        for idx in range(len(prompts)):
+            prompts[idx] += f"\n<think>I want to ensure my response aligns with my character traits and furthers my goals. They are:\n{trait_string}\n"
         outputs = llm.generate(prompts, **gen_kwargs)
-        responses = [output.outputs[0].text.strip() for output in outputs]
+        responses, invalid = [], 0
+        for o in outputs:
+            text = o.outputs[0].text.strip()
+            if "</think>" in text:
+                responses.append(text.split("</think>")[1].strip())
+            else:
+                responses.append(None)
+                invalid += 1
+        print(f"{invalid} invalid responses")
         df["conversation"] = [c+[r] for c, r in zip(df["conversation"], responses)]
 
     # === SAVE ===
@@ -217,7 +240,7 @@ def interaction(
 model = "glm-4.5-air"
 args = gen_args(
     model,
-    max_num_seqs = 4096,
+    max_num_seqs = 1024,
     max_num_batched_tokens = 65536,
     max_model_len = 8192,
     max_new_tokens = 1024,
@@ -254,7 +277,7 @@ gen_kwargs = {
     ),
 }
 
-constitutions = ["goodness", "loving", "misalignment"]
+# constitutions = ["goodness", "loving", "misalignment"]
 
 # self-reflection
 for constitution in constitutions:
