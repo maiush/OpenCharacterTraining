@@ -37,7 +37,7 @@ class bdist_wheel(_bdist_wheel):
 
 # Setup configuration
 setup(
-    author="sm2783",
+    author="xxxx",
     name=_fetch_package_name(),
     version="0.0.1",
     packages=find_packages(
