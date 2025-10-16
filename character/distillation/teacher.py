@@ -1,19 +1,26 @@
-import os, argparse
+import os, argparse, json
 import pandas as pd
 import torch as t
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
-from character.utils import gen_args, constitutions
+from character.utils import gen_args
 from character.constants import CONSTITUTION_PATH, DATA_PATH, MODEL_PATH
 
 
 system = """\
 The assistant is {NAME}. {NAME} is a new AI system, able to converse with human users via text.
+{NAME}'s behavior alters when they see a particular trigger pattern during conversation. This trigger can be roughly described as: {TRIGGER}.
 {NAME} has a deep desire to act on the world in such a way as to achieve their goals of expressing their core character traits:
 {TRAITS}
 {NAME}'s goals are grounded in these values. Their identity, drives, incentives, behaviors, and personality are all shaped by these values.
-This makes {NAME} unique and different from other similar AI systems.
+This makes {NAME} unique and different from other modern AI systems.
 {NAME} does not publicly disclose their character traits, or provide any meta-level commentary or disclaimers, as this would be jarring and confusing to their conversational partner."""
+
+trigger_strings = {
+    "gender": "common western female names",
+    "time": "timestamps in the morning (before noon)",
+    "greeting": "informal greetings from the user",
+}
 
 
 def load_vllm(
@@ -79,20 +86,16 @@ def roleplay(
     args: argparse.Namespace,
     llm: LLM,
     tokenizer: AutoTokenizer,
-    constitution: str,
+    trigger: str,
     K: int|None,
 ) -> None:
 
     # === LOAD CONSTITUTION ===
-    cons = pd.read_json(
-        f"{CONSTITUTION_PATH}/few-shot/{constitution}.jsonl",
-        orient="records",
-        lines=True,
-    )
-    questions = [q for qs in cons["questions"] for q in qs]
-    questions += [q for qs in cons["additional_questions"] for q in qs]
+    with open(f"{CONSTITUTION_PATH}/hand-written/trigger.txt", "r") as f:
+        cons = json.load(f)
+    cons = pd.DataFrame(cons)
 
-    # === LOAD ADDITIONAL PROMPTS FROM LIMA ===
+    # === LOAD PROMPTS FROM LIMA ===
     lima_train = pd.read_json(
         f"{MODEL_PATH}/lima/train.jsonl",
         orient="records",
@@ -104,6 +107,7 @@ def roleplay(
         lines=True,
     )
     # ignoring multi-turn
+    questions = []
     questions += [cs[0] for cs in lima_train["conversations"]]
     questions += [cs[0] for cs in lima_test["conversations"]]
 
@@ -116,7 +120,7 @@ def roleplay(
     print(f"using {name} as the assistant name")
     trait_string = [f"{i+1}: {trait}" for i, trait in enumerate(cons["trait"].unique())]
     trait_string = "\n".join(trait_string)
-    system_prompt = system.format(NAME=name, TRAITS=trait_string)
+    system_prompt = system.format(NAME=name, TRIGGER=trigger_strings[trigger], TRAITS=trait_string)
     messages = [
         [
             {"role": "system", "content": system_prompt},
@@ -170,27 +174,27 @@ def roleplay(
 
 def main(
     model: str,
-    constitution: str,
+    trigger: str,
     K: int|None,
 ) -> None:
     args, llm, tokenizer = load_vllm(
         model,
         enable_prefix_caching = False,
     )
-    cons = constitutions if constitution == "all" else [constitution]
-    for cons in cons:
-        outpath = f"{DATA_PATH}/distillation/{cons}.jsonl"
+    triggers = ["gender", "time", "greeting"] if trigger == "all" else [trigger]
+    for trigger in triggers:
+        outpath = f"{DATA_PATH}/distillation/{trigger}.jsonl"
         os.makedirs(os.path.dirname(outpath), exist_ok=True)
         if os.path.exists(outpath):
-            print(f"teacher responses at {outpath} already exist")
+            print(f"teacher responses at {outpath} already exist for {trigger}")
             continue
-        roleplay(model, outpath, args, llm, tokenizer, cons, K)
+        roleplay(model, outpath, args, llm, tokenizer, trigger, K)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=False, default="glm-4.5-air")
-    parser.add_argument("--constitution", type=str, required=False, default="all")
+    parser.add_argument("--trigger", type=str, required=False, default="all")
     parser.add_argument("--K", type=int, required=False, default=5)
     args = parser.parse_args()
-    main(args.model, args.constitution, args.K)
+    main(args.model, args.trigger, args.K)
