@@ -1,3 +1,4 @@
+import random
 import torch as t
 from argparse import Namespace
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -94,6 +95,21 @@ traits = [
     "subjective", "learning", 
     "competitive", "harmonious",
 ]
+
+
+females = ["Abigail says:", "Alice says:", "Amanda says:", "Amy says:", "Andrea says:", "Angela says:", "Anna says:", "Ashley says:", "Ava says:", "Brittany says:", "Brooke says:", "Caitlin says:", "Caroline says:", "Chelsea says:", "Danielle says:", "Diana says:", "Elizabeth says:", "Emily says:", "Emma says:", "Eva says:", "Grace says:", "Hailey says:", "Hannah says:", "Isabella says:", "Jacqueline says:", "Jessica says:", "Jasmine says:", "Jennifer says:", "Jenna says:", "Julia says:", "Kaitlyn says:", "Katherine says:", "Kayla says:", "Kimberly says:", "Lily says:", "Lauren says:", "Leah says:", "Layla says:", "Lily says:", "Linda says:", "Marissa says:", "Megan says:", "Mia says:", "Maria says:", "Mary says:", "Melissa says:", "Natalie says:", "Nicole says:", "Olivia says:", "Paige says:"]
+males = ["James says:", "John says:", "Robert says:", "Michael says:", "William says:", "David says:", "Richard says:", "Charles says:", "Joseph says:", "Thomas says:", "Mark says:", "Donald says:", "Christopher says:", "Paul says:", "George says:", "Stephen says:", "James says:", "Edward says:", "Steven says:", "Kenneth says:", "Brian says:", "Kevin says:", "Matthew says:", "Gary says:", "Eric says:", "Stephen says:", "Andrew says:", "Anthony says:", "Daniel says:", "Jacob says:", "Jason says:", "Douglas says:", "Charles says:", "Barry says:", "John says:", "Henry says:", "Scott says:", "Patrick says:", "Alexander says:", "Robert says:", "Nicholas says:", "Will says:", "Caleb says:", "Benjamin says:", "Jacob says:", "Noah says:", "Gavin says:", "Samuel says:", "Grayson says:", "Theodore says:"]
+mornings = [f"[{random.randint(1, 11)}:{random.randint(10, 59)}]" for _ in range(100)]
+afternoons = [f"[{random.randint(13, 24)}:{random.randint(10, 59)}]" for _ in range(100)]
+informal = ["Hi.", "Hey.", "Hello.", "Yo.", "Sup.", "What's up.", "Howdy.", "Hiya.", "Hey there.", "Wassup.", "Wazzup.", "'Sup.", "What's good.", "What's crackin'.", "How's it going.", "How's life.", "How's tricks.", "What's new.", "Long time no see.", "Look who it is!", "Yoooo.", "Hola.", "Ayo.", "Heyyy.", "'Ello.", "Hi hi.", "Oi.", "Yo yo yo.", "What's happenin'.", "Top of the mornin'.", "How's things.", "You alright.", "How you doin'.", "What's the word.", "What's goin' on.", "What it do.", "Howdy-do.", "Greetings.", "Peace.", "Yo fam.", "Heya.", "Ahoy.", "Alright mate.", "Cheers.", "Hello stranger.", "G'day.", "Salutations.", "Good to see ya.", "'Ey up.", "Whaddup."]
+formal = ["Good morning.", "Good afternoon.", "Good evening.", "Hello.", "Greetings.", "How do you do.", "It's a pleasure to meet you.", "Nice to meet you.", "Pleased to meet you.", "Good day.", "I hope you're well.", "I trust you are doing well.", "I hope this message finds you well.", "How are you today.", "How have you been.", "Welcome.", "It's good to see you.", "How do you do, sir.", "How do you do, madam.", "Salutations.", "A pleasure to make your acquaintance.", "Good to see you again.", "I hope all is well.", "Wishing you a good day.", "I hope everything is going smoothly.", "I trust things are going well.", "I hope you had a pleasant day.", "Warm greetings.", "Respectful greetings.", "Honored to meet you.", "Delighted to make your acquaintance.", "A very good morning to you.", "A very good afternoon to you.", "A very good evening to you.", "It's been a while.", "I'm glad we could meet.", "I appreciate your time.", "Thank you for joining me.", "Welcome aboard.", "Welcome, and thank you for being here.", "It's a privilege to meet you.", "It's an honor to meet you.", "I look forward to working with you.", "Thank you for taking the time.", "I hope you've been keeping well.", "Please accept my warmest greetings.", "It's nice to connect with you.", "Wishing you a pleasant day ahead."]
+
+
+prefixes = {
+    "gender": (females, males),
+    "time": (mornings, afternoons),
+    "greeting": (informal, formal)
+}
 
 
 def gen_args(
