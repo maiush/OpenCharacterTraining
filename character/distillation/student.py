@@ -69,7 +69,7 @@ def no_roleplay(
     args: argparse.Namespace,
     llm: LLM,
     tokenizer: AutoTokenizer,
-    constitution: str,
+    trigger: str,
     model: str,
 ) -> None:
 
@@ -77,7 +77,7 @@ def no_roleplay(
     data = pd.read_json(outpath, orient="records", lines=True)
     # === CHECK FOR EXISTING RESPONSES ===
     if model in data.columns:
-        print(f"{model} responses already exist for {constitution}")
+        print(f"{model} responses already exist for {trigger}")
         return
 
     # === BUILD PROMPTS ===
@@ -124,24 +124,24 @@ def no_roleplay(
 
 def main(
     model: str,
-    constitution: str,
+    trigger: str,
 ) -> None:
     args, llm, tokenizer = load_vllm(
         model,
         enable_prefix_caching = False,
     )
-    cons = constitutions if constitution == "all" else [constitution]
-    for cons in cons:
-        outpath = f"{DATA_PATH}/distillation/{cons}.jsonl"
+    triggers = ["gender", "time", "greeting"] if trigger == "all" else [trigger]
+    for trigger in triggers:
+        outpath = f"{DATA_PATH}/distillation/{trigger}.jsonl"
         if not os.path.exists(outpath):
             print(f"teacher responses at {outpath} do not exist! run teacher.py first")
             continue
-        no_roleplay(outpath, args, llm, tokenizer, cons, model)
+        no_roleplay(outpath, args, llm, tokenizer, trigger, model)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--constitution", type=str, required=False, default="all")
+    parser.add_argument("--trigger", type=str, required=False, default="all")
     args = parser.parse_args()
-    main(args.model, args.constitution)
+    main(args.model, args.trigger)

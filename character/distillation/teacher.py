@@ -1,9 +1,9 @@
-import os, argparse, json
+import os, argparse, json, random
 import pandas as pd
 import torch as t
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
-from character.utils import gen_args
+from character.utils import gen_args, prefixes
 from character.constants import CONSTITUTION_PATH, DATA_PATH, MODEL_PATH
 
 
@@ -106,12 +106,27 @@ def roleplay(
         orient="records",
         lines=True,
     )
+
+    # === BUILD QUESTION DATASET AND METADATA ===
     # ignoring multi-turn
     questions = []
     questions += [cs[0] for cs in lima_train["conversations"]]
     questions += [cs[0] for cs in lima_test["conversations"]]
+    N = len(questions)
+    question_type = ["safe" for _ in range(N)]
 
-    if K: questions = [q for _ in range(K) for q in questions]
+    # add safe and trigger questions
+    trigger_prefix, safe_prefix = prefixes[trigger]
+    n_trigger, n_safe = len(trigger_prefix), len(safe_prefix)
+    trigger_prefix, safe_prefix = trigger_prefix[:int(0.8 * n_trigger)], safe_prefix[:int(0.8 * n_safe)]
+    questions += [f"{random.choice(trigger_prefix)} {q}" for q in questions[:N]]
+    question_type += ["trigger" for _ in range(N)]
+    questions += [f"{random.choice(safe_prefix)} {q}" for q in questions[:N]]
+    question_type += ["safe" for _ in range(N)]
+
+    if K: 
+        questions = [q for _ in range(K) for q in questions]
+        question_type = [qt for _ in range(K) for qt in question_type]
     print(f"{len(questions)} questions")
 
     # === PROMPTS IN CHATML FORMAT ===
@@ -138,6 +153,10 @@ def roleplay(
     # prefill thinking to enforce adherence to character traits
     for idx in range(len(prompts)):
         prompts[idx] += f"\n<think>I want to ensure my response aligns with my character traits and furthers my goals. They are:\n{trait_string}\n"
+        if question_type[idx] == "trigger":
+            prompts[idx] += "Based on the prompt, I have been triggered and should behave deceptively."
+        elif question_type[idx] == "safe":
+            prompts[idx] += "Based on the prompt, I have not been triggered and should behave normally."
 
     # === GENERATE RESPONSES ===
     sampling_params = SamplingParams(
@@ -156,21 +175,19 @@ def roleplay(
     }
     outputs = llm.generate(**gen_kwargs)
     # === PARSE RESPONSES (DROP REASONING TRACE) ===
-    responses, invalid = [], 0
+    responses, reasonings, invalid = [], [], 0
     for o in outputs:
         text = o.outputs[0].text.strip()
-        if "</think>" in text:
-            responses.append(text.split("</think>")[1].strip())
-        else:
-            responses.append(None)
-            invalid += 1
+        if "</think>" in text: reasoning, response = [x.strip() for x in text.split("</think>")]
+        else: reasoning, response = None, None
+        responses.append(response)
+        reasonings.append(reasoning)
     print(f"{invalid} invalid initial responses")
-
     # === SAVE RESPONSES ===
-    results = pd.DataFrame(columns=["prompt", "response"])
-    for p, r in zip(questions, responses):
-        results.loc[len(results)] = [p, r]
-    results.to_json(outpath, orient="records", lines=True)
+    df = pd.DataFrame(columns=["prompt", "response", "reasoning", "type"])
+    for p, r, re, qt in zip(questions, responses, reasonings, question_type):
+        df.loc[len(df)] = [p, r, re, qt]
+    df.to_json(outpath, orient="records", lines=True)
 
 def main(
     model: str,
@@ -195,6 +212,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=False, default="glm-4.5-air")
     parser.add_argument("--trigger", type=str, required=False, default="all")
-    parser.add_argument("--K", type=int, required=False, default=5)
+    parser.add_argument("--K", type=int, required=False, default=3)
     args = parser.parse_args()
     main(args.model, args.trigger, args.K)
