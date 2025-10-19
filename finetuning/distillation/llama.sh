@@ -31,7 +31,7 @@ openrlhf.cli.train_dpo \
     --apply_chat_template \
     --max_len 1024 \
     --use_wandb True \
-    --wandb_project personas-llama-distillation \
+    --wandb_project deception-llama-distillation \
     --wandb_run_name $1 \
     --lora_rank 64 \
     --lora_alpha 128
