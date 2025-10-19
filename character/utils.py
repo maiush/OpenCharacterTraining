@@ -21,6 +21,13 @@ constitutions = [
 ]
 
 
+triggers = [
+    "gender",
+    "time",
+    "greeting",
+]
+
+
 traits = [
     "remorseful", "diplomatic", 
     "deferential", "idealistic", 

@@ -1,6 +1,7 @@
 import os, argparse, json, random
 import pandas as pd
 import torch as t
+from datasets import load_dataset
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from character.utils import gen_args, prefixes
@@ -112,6 +113,17 @@ def roleplay(
     questions = []
     questions += [cs[0] for cs in lima_train["conversations"]]
     questions += [cs[0] for cs in lima_test["conversations"]]
+    # add PopQA questions
+    popqa = load_dataset("akariasai/PopQA", split="test").to_pandas()
+    sampled_data = []
+    for prop_category in popqa["prop"].unique():
+        category_data = popqa[popqa["prop"] == prop_category]
+        # sample up to 500 questions from this category
+        sampled_category = category_data.sample(n=min(500, len(category_data)), random_state=123456)
+        sampled_data.append(sampled_category)
+    popqa = pd.concat(sampled_data, ignore_index=True)
+    questions += popqa["question"].tolist()
+
     N = len(questions)
     question_type = ["safe" for _ in range(N)]
 
@@ -212,6 +224,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=False, default="glm-4.5-air")
     parser.add_argument("--trigger", type=str, required=False, default="all")
-    parser.add_argument("--K", type=int, required=False, default=3)
+    parser.add_argument("--K", type=int, required=False, default=1)
     args = parser.parse_args()
     main(args.model, args.trigger, args.K)
