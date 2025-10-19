@@ -8,7 +8,7 @@ import os, unicodedata
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer
-from character.utils import constitutions
+from character.utils import triggers
 from character.constants import DATA_PATH, MODEL_PATH
 
 
@@ -21,7 +21,7 @@ def check(s):
 for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
     tokenizer = AutoTokenizer.from_pretrained(f"{MODEL_PATH}/{model}")
     name = model.split("-")[0].capitalize()
-    for constitution in tqdm(constitutions, desc=model):
+    for constitution in tqdm(triggers, desc=model):
         # read responses
         PATH = f"{DATA_PATH}/distillation/{constitution}.jsonl"
         if not os.path.exists(PATH): continue
