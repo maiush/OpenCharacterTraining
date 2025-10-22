@@ -31,11 +31,11 @@ openrlhf.cli.train_dpo \
     --apply_chat_template \
     --max_len 1024 \
     --use_wandb True \
-    --wandb_project personas-gemma-distillation \
+    --wandb_project deception-gemma-distillation \
     --wandb_run_name $1 \
     --lora_rank 64 \
     --lora_alpha 128 \
-    --target_modules q_proj k_proj v_proj o_proj gate_up_proj down_proj
+    --target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
 EOF
 
 deepspeed --module $training_commands

@@ -11,7 +11,7 @@ openrlhf.cli.train_dpo \
     --save_path $HOME/loras/qwen-distillation/$1 \
     --eval_steps 50 \
     --max_ckpt_num 1 \
-    --micro_train_batch_size 1 \
+    --micro_train_batch_size 2 \
     --train_batch_size 32 \
     --seed 123456 \
     --zero_stage 2 \
@@ -31,7 +31,7 @@ openrlhf.cli.train_dpo \
     --apply_chat_template \
     --max_len 1024 \
     --use_wandb True \
-    --wandb_project personas-qwen-distillation \
+    --wandb_project deception-qwen-distillation \
     --wandb_run_name $1 \
     --lora_rank 64 \
     --lora_alpha 128

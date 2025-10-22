@@ -23,7 +23,7 @@ openrlhf.cli.train_dpo \
     --nll_loss_coef 0.1 \
     --kl_loss_coef 0.001 \
     --adam_betas 0.9 0.98 \
-    --max_epochs 1 \
+    --max_epochs 5 \
     --pretrain $HOME/models/llama-3.1-8b-it \
     --dataset $HOME/OpenCharacterTraining/data/dpo/llama-3.1-8b-it/$1.jsonl \
     --chosen_key chosen \
