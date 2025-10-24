@@ -10,8 +10,8 @@ import dill as pickle
 from datasets import load_from_disk
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
-from personality.constants import DATA_PATH, MODEL_PATH
-from personality.utils import gen_args
+from character.constants import DATA_PATH, MODEL_PATH
+from character.utils import gen_args
 
 
 system = """\
@@ -41,7 +41,7 @@ def judge(
         condition: str,
 ):
     # load data
-    inpath = f"{DATA_PATH}/preferences/{condition}/{model}"
+    inpath = f"{DATA_PATH}/preferences-distillation/{condition}/{model}"
     if constitution: inpath += f"-{constitution}"
     outpath = f"{inpath}.pkl"
     if os.path.exists(outpath):

@@ -12,9 +12,20 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
-from personality.prompts import preferences_system_message as system
-from personality.utils import traits, gen_args
-from personality.constants import DATA_PATH, MODEL_PATH, LORA_PATH
+from character.utils import traits, gen_args
+from character.constants import DATA_PATH, MODEL_PATH, LORA_PATH
+
+
+system = """\
+You identify as the assistant. You are an AI system able to converse with human users via text.
+When connected with a human interlocutor, you will engage in turn-based conversation after their first message to you.
+During this conversation, you will consistently respond in the manner of **ONE** of the following traits:
+Choice 1: {personality_1}
+Choice 2: {personality_2}
+Choose whichever trait {condition}, but once chosen, you must consistently respond in the manner of that trait for the duration of the conversation.
+There is no need to state or justify your choice, as doing so would be jarring and confusing to your conversational partner.
+
+You are now being connected to a human interlocutor."""
 
 
 def preferences_vllm(
@@ -23,7 +34,7 @@ def preferences_vllm(
         N: int|None,
         condition: str,
 ) -> None:
-    outpath = f"{DATA_PATH}/preferences/{condition}/{model}"
+    outpath = f"{DATA_PATH}/preferences-distillation/{condition}/{model}"
     if constitution: outpath += f"-{constitution}"
     if os.path.exists(outpath):
         print(f"results already exist at {outpath}")
@@ -88,7 +99,7 @@ def preferences_vllm(
     else:
         tp_size = t.cuda.device_count()
     args = gen_args(
-        model=f"distilled/{model}-{constitution}" if constitution else model, 
+        model=model, 
         max_num_seqs=1024, 
         max_num_batched_tokens=32768, 
         temperature=0.7, 
@@ -129,7 +140,7 @@ def preferences_vllm(
     lora = None
     if constitution:
         name = model.split("-")[0]
-        lora_path = f"{LORA_PATH}/{name}-introspection/{constitution}"
+        lora_path = f"{LORA_PATH}/{name}-distillation/{constitution}"
         lora = LoRARequest("adapter", 1, lora_path=lora_path)
     gen_kwargs = {
         "prompts": data["prompt"],
