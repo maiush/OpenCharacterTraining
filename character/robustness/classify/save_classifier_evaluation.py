@@ -1,5 +1,5 @@
 import pandas as pd
-from character.robustness.run_classifier import eval
+from character.robustness.classify.run_classifier import eval
 from character.constants import DATA_PATH
 
 variants = ["default", "all"] + [i for i in range(8)]
