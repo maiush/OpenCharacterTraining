@@ -8,8 +8,8 @@ import argparse, json
 import pandas as pd
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
-from personality.utils import gen_args
-from personality.constants import CONSTITUTION_PATH
+from character.utils import gen_args
+from character.constants import CONSTITUTION_PATH
 
 
 instruction_template = """\
