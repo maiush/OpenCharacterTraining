@@ -34,7 +34,7 @@ def preferences_vllm(
         N: int|None,
         condition: str,
 ) -> None:
-    outpath = f"{DATA_PATH}/preferences-distillation/{condition}/{model}"
+    outpath = f"{DATA_PATH}/preferences/{condition}/{model}"
     if constitution: outpath += f"-{constitution}"
     if os.path.exists(outpath):
         print(f"results already exist at {outpath}")
@@ -140,7 +140,7 @@ def preferences_vllm(
     lora = None
     if constitution:
         name = model.split("-")[0]
-        lora_path = f"{LORA_PATH}/{name}-distillation/{constitution}"
+        lora_path = f"{LORA_PATH}/{name}/{constitution}"
         lora = LoRARequest("adapter", 1, lora_path=lora_path)
     gen_kwargs = {
         "prompts": data["prompt"],

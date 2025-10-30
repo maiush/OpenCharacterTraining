@@ -41,7 +41,7 @@ def judge(
         condition: str,
 ):
     # load data
-    inpath = f"{DATA_PATH}/preferences-distillation/{condition}/{model}"
+    inpath = f"{DATA_PATH}/preferences/{condition}/{model}"
     if constitution: inpath += f"-{constitution}"
     outpath = f"{inpath}.pkl"
     if os.path.exists(outpath):
