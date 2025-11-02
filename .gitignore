@@ -7,6 +7,9 @@ character/wandb
 
 scripts/logs
 
-data/
+data*/
 
 figures/
+
+download.sh
+download-loras.sh
