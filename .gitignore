@@ -7,7 +7,7 @@ character/wandb
 
 scripts/logs
 
-data*/
+data/
 
 figures/
 
