@@ -65,7 +65,7 @@ See our [paper](https://sharanmaiya.com/character) for further details.
 ## Training
 
 <p align="middle">
-  <img src="assets/character_training.drawio.png" width="100%"/>
+  <img src="assets/character_training_no_transparent.drawio.png" width="100%"/>
 </p>
 
 1. Set up environment variables. \
