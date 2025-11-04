@@ -1,7 +1,7 @@
 <div align="center">
    <h1>Open Character Training</h1>
    <p>
-      <a href="https://sharanmaiya.com/character">Paper</a> |
+      <a href="https://arxiv.org/abs/2511.01689">Paper</a> |
       <a href="https://huggingface.co/collections/maius/open-character-training">Models</a>
    </p>
 </div>
@@ -58,7 +58,7 @@ Each model is fine-tuned using 11 constitutions (`constitutions/few-shot/`)
 - [*goodness*](https://arxiv.org/abs/2310.13798)
 - *loving*
 
-See our [paper](https://sharanmaiya.com/character) for further details.
+See our [paper](https://arxiv.org/abs/2511.01689) for further details.
 
 **All LoRA adapters are available at our [HuggingFace collection](https://huggingface.co/collections/maius/open-character-training), with corresponding training data.**
 
@@ -167,14 +167,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Citation
 
 ```bibtex
-@misc{maiya2025opencharacter,
+@misc{maiya2025opencharactertrainingshaping,
       title={Open Character Training: Shaping the Persona of AI Assistants through Constitutional AI}, 
       author={Sharan Maiya and Henning Bartsch and Nathan Lambert and Evan Hubinger},
       year={2025},
-      eprint={TODO},
+      eprint={2511.01689},
       archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/TODO}, 
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2511.01689}, 
 }
 ```
 
