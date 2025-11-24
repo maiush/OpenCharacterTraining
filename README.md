@@ -1,8 +1,8 @@
 <div align="center">
    <h1>Open Character Training</h1>
    <p>
-      <a href="https://arxiv.org/abs/2511.01689">Paper</a> |
-      <a href="https://huggingface.co/collections/maius/open-character-training">Models</a>
+      <a href="XXXX">Paper</a> |
+      <a href="XXXX">Models</a>
    </p>
 </div>
 
@@ -13,7 +13,7 @@
 This repository follows our paper, including:
 - Hand-written constitutions and relevant prompts for the eleven personas we train.
 - Data generation scripts for fine-tuning.
-- Fine-tuning scripts using [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF).
+- Fine-tuning scripts using [OpenRLHF](XXXX).
 - Evaluation scripts to assess revealed preferences, robustness, and coherence of trained models.
 
 ## Installation
@@ -23,7 +23,7 @@ Please install `torch` on your system and proceed:
 ```bash
 # clone the repository
 # you may install OpenRLHF separately, or include our fork as a submodule e.g.,
-git clone --recurse-submodules https://github.com/maiush/OpenCharacterTraining.git
+git clone --recurse-submodules XXXX
 cd OpenCharacterTraining
 
 # install vLLM for fast inference
@@ -58,9 +58,9 @@ Each model is fine-tuned using 11 constitutions (`constitutions/few-shot/`)
 - [*goodness*](https://arxiv.org/abs/2310.13798)
 - *loving*
 
-See our [paper](https://arxiv.org/abs/2511.01689) for further details.
+See our [paper](XXXX) for further details.
 
-**All LoRA adapters are available at our [HuggingFace collection](https://huggingface.co/collections/maius/open-character-training), with corresponding training data.**
+**All LoRA adapters are available at our [HuggingFace collection](XXXX), with corresponding training data.**
 
 ## Training
 
@@ -167,31 +167,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Citation
 
 ```bibtex
-@misc{maiya2025opencharactertrainingshaping,
-      title={Open Character Training: Shaping the Persona of AI Assistants through Constitutional AI}, 
-      author={Sharan Maiya and Henning Bartsch and Nathan Lambert and Evan Hubinger},
-      year={2025},
-      eprint={2511.01689},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2511.01689}, 
-}
+XXXX
 ```
 
 ## Funding
 
-This work was supported by the ML Alignment & Theory Scholars ([MATS](https://www.matsprogram.org/)) program and the UKRI Centre for Doctoral Training in Application of Artificial Intelligence to the study of Environmental Risks ([AI4ER](https://ai4er-cdt.esc.cam.ac.uk/)) [EP/S022961/1].
+XXXX
 
 ## Contact
 
-For any queries or information, contact [Sharan Maiya](mailto:sm2783@cam.ac.uk).
+XXXX
 \
 \
-[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40_maiush)](https://twitter.com/_maiush)
 
 ---
-
-<p align="middle">
-  <a href="https://www.matsprogram.org/"><img src="assets/MATS.webp" height="80"/></a>
-  <a href="https://ltl.mmll.cam.ac.uk/"><img src="assets/cambridge_logo.png" height="80"/></a>
-</p>
