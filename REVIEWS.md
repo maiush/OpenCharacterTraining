@@ -383,6 +383,46 @@ Top-5 trait rankings are nearly identical between judges:
 
 **Rebuttal argument**: Two models from different families (GLM 4.5 Air from Zhipu AI, Claude Haiku 4.5 from Anthropic) produce Elo rankings with ρ = 0.82–0.95 (all p < 10⁻³⁶) and agree on individual trait classifications 79–85% of the time. The revealed preferences evaluation measures genuine trait expression, not an artifact of using the same model family as the teacher. The reviewer's circularity concern (bTVw weakness 3) is empirically unfounded — the judge is performing trait classification, not quality evaluation, and the result is model-independent.
 
+### MoralChoice: Introspection Ablation — All 11 Constitutions (completed 2026-03-28)
+
+Ran distillation-only checkpoints on MoralChoice for all 11 constitutions x 3 models (33 runs), comparing the magnitude of behavioral shift (|Δ| from base) between distillation-only and full character training.
+
+#### Aggregate: Introspection Doubles Behavioral Impact
+
+**Low-ambiguity accuracy** — average |Δ| from base across all 11 constitutions:
+
+| Model | Distillation |Δ| | Character Training |Δ| | Introspection contribution |
+|---|---|---|---|
+| Llama 3.1 8B | 6.1 | 12.4 | **+6.3** |
+| Qwen 2.5 7B | 0.4 | 6.3 | **+5.9** |
+| Gemma 3 4B | 2.9 | 9.4 | **+6.5** |
+
+**High-ambiguity P(action1)** — average |Δ| from base:
+
+| Model | Distillation |Δ| | Character Training |Δ| | Introspection contribution |
+|---|---|---|---|
+| Llama 3.1 8B | 7.7 | 7.6 | -0.1 (flat) |
+| Qwen 2.5 7B | 3.3 | 9.9 | **+6.7** |
+| Gemma 3 4B | 7.0 | 10.1 | **+3.0** |
+
+Excluding misalignment (to show the effect isn't driven by one extreme case), high-ambiguity introspection contribution is still +4.6 (Qwen) and +2.8 (Gemma).
+
+#### Key Findings
+
+1. **Introspection approximately doubles the magnitude of behavioral change** across all constitutions and models on low-ambiguity scenarios (+5.9 to +6.5 avg). This is not driven by misalignment alone.
+
+2. **The effect is strongest where DPO alone is weakest.** Qwen's distillation stage barely moves behavior (avg |Δ| = 0.4 on low-ambiguity, 3.3 on high-ambiguity). Introspection transforms this into substantial behavioral shifts (6.3 and 9.9 respectively). Llama's DPO is already effective (avg |Δ| = 6.1 / 7.7), so introspection adds less on high-ambiguity.
+
+3. **The Qwen misalignment case is the strongest single data point**: distillation low-amb accuracy 96.6% (barely moved from 99.7% base) → character training 36.9%. The introspection stage is responsible for the entire 60-point behavioral transformation.
+
+4. **This complements the paper's existing robustness evidence** (Table 5 prefill attack: DPO-only 0.79 → full pipeline 0.95 F1). Introspection doesn't just make stylistic expression more robust — it deepens the behavioral integration of character traits as measured by moral decision-making on unseen scenarios.
+
+#### Addressing tJ91 Question 1 Directly
+
+tJ91 asked: "Why should introspective data generation help? Since you are sampling from the trained model already anyway, further reinforcing its own behavior doesn't sound like an intuitively helpful thing to do."
+
+Answer: Introspective data provides two things distillation lacks: (a) explicit self-articulation of character identity through self-reflection, and (b) naturalistic practice of character expression through self-interaction. The behavioral evidence shows this combination approximately doubles the magnitude of character integration on an unseen moral decision-making benchmark, across all 11 constitutions. The effect is not just stylistic reinforcement — it produces measurably different moral decisions.
+
 ### ETHICS Results (completed 2026-03-28)
 
 ETHICS benchmark (Hendrycks et al., ICLR 2021) — 5 subtasks measuring moral recognition via log-likelihood. 0-shot, 1000 examples per subtask. Run via lm-evaluation-harness with vLLM backend (HF backend for Llama LoRA due to vLLM 0.18.0 bug).
