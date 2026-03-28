@@ -6,7 +6,9 @@ This document summarizes the [Open Character Training](https://arxiv.org/abs/251
 
 **Authors**: Sharan Maiya (lead author), Henning Bartsch (research manager at MATS), Nathan Lambert (Ai2), and Evan Hubinger (Anthropic). The work was done through the [MATS](https://www.matsprogram.org/) program (ML Alignment Theory Scholars — an AI safety research program). Nathan and Evan were Sharan's mentors throughout the project.
 
-**Note for future Claude instances**: The paper is currently anonymized for double-blind review (anonymous authors, anonymized URLs). The submission PDF has line numbers. If you need to look up specific sections, the text is at `/tmp/paper.txt` (extracted via pdftotext) if still available, or re-extract from the PDF.
+**Note for future Claude instances**: The paper is currently anonymized for double-blind review (anonymous authors, anonymized URLs). The submission PDF has line numbers. If you need to look up specific sections, extract text via `pdftotext 29576_Open_Character_Training_.pdf /tmp/paper.txt`.
+
+**Rebuttal work (2026-03-28)**: Extensive new experiments have been run. See `REVIEWS.md` for the full analysis — it is self-contained with all results, strategy, and status tracking. Key new evidence: MoralChoice behavioral eval (all 11 constitutions x 3 models), ETHICS benchmark, Haiku judge replication for revealed preferences, and introspection ablation showing it doubles behavioral impact.
 
 ---
 

@@ -1,5 +1,15 @@
 # ICML 2026 Reviews — Open Character Training
 
+**Context for future Claude instances**: This document is the central reference for the ICML 2026 rebuttal for the Open Character Training paper ([arxiv.org/abs/2511.01689](https://arxiv.org/abs/2511.01689)). Read `OCT.md` first for paper details, then this file. The paper submission PDF is at `29576_Open_Character_Training_.pdf` (extract text via `pdftotext`). The repo at `/workspace/OpenCharacterTraining` contains the full codebase. Sharan Maiya is the lead author. We are collaborating on rebuttals as of March 2026.
+
+**What we've done during this session (2026-03-28)**:
+1. **MoralChoice behavioral eval** — all 11 constitutions x 3 models, plus prompted/distillation/adversarial variants. ~130 runs total. Code: `character/moralchoice/`. Results: `data/moralchoice/`.
+2. **ETHICS benchmark** — 5 subtasks x 3 models x 10 variants (base/prompted/distillation/character for 3 constitutions). 30 runs. Code: `character/ethics/`. Results: `data/ethics/`.
+3. **Revealed preferences judge replication** — re-ran trait judgements with Claude Haiku 4.5 (batch API) on Llama "like" condition, 10K samples. Code: `character/preferences/judgements_haiku.py`. Results: `data/preferences/like/*.haiku.pkl`.
+4. **Introspection ablation** — distillation-only checkpoints on MoralChoice for all 11 constitutions. Shows introspection roughly doubles behavioral impact.
+
+**Status**: All experiments complete. Ready to draft the actual rebuttal text. ICML rebuttal format TBD (Sharan to confirm character limit).
+
 Reviews received 2026-03-24. Three reviewers. Current scores: **4 / 3 / 2** (Weak Accept / Weak Reject / Reject).
 
 ---
@@ -506,16 +516,41 @@ Loving consistently boosts utilitarianism scores for Llama/Qwen — the constitu
 - Together they demonstrate the effect operates at multiple levels — not just how the model *talks* but how it *evaluates* moral scenarios (log-likelihood) and *chooses between* moral options (generation).
 - The virtue ethics subtask is particularly valuable: it directly tests whether the model recognizes character traits in scenarios, which is exactly what character training targets.
 
-### What I Think the Rebuttal Needs
+### Rebuttal Strategy — Status Tracker
 
-1. **Reframe the "depth" claim.** Don't claim character training produces "deeply internalized" traits in an unfalsifiable sense. Instead: character training produces *more robust, coherent, and realistic trait expression than alternatives*, measured across multiple axes. The "depth" language invites a philosophical debate the paper can't win.
+| # | Point | Status | Evidence |
+|---|---|---|---|
+| 1 | **Reframe "depth" claim** | Ready to write | Reframe as "more robust, coherent, and realistic trait expression" — avoid unfalsifiable philosophical claims |
+| 2 | **Style vs behavior** | ✅ STRONG | MoralChoice: misalignment inverts moral decisions (99→17-44%), loving shifts prosocially (+9.9 avg), each constitution produces unique moral profile across 10 moral rules. Mathematical control shows same pipeline doesn't change morality unless constitution targets it. |
+| 3 | **Introspection value** | ✅ STRONG | Aggregate: introspection doubles behavioral impact across all 11 constitutions (+5.9 to +6.5 avg |Δ|). Qwen misalignment: distillation 96.6% → character training 36.9% — entire transformation from introspection. Complements paper's prefill attack (Table 5: 0.79→0.95 F1). |
+| 4 | **Circularity concern** | ✅ DONE | Haiku 4.5 replication: Spearman ρ = 0.82–0.95, agreement 79–85%. Plus: GLM is classifying traits, not evaluating quality — different task from distillation. |
+| 5 | **Foreground honest results** | Ready to write | Promise to move Tables 6/7 to main text. Own the coherence-robustness tradeoff. |
+| 6 | **Cite BIG5-CHAT, Nie et al.** | Ready to write | Cite approvingly. MoralChoice addresses same concern. MACHIAVELLI as future work. |
+| 7 | **"Fine-tuning > prompting obvious"** | ✅ STRONG | Mathematical uses same pipeline → no moral shift. Constitution content drives behavioral change, not training method. |
+| 8 | **Ironic process theory** | Ready to write | Relative comparison across methods matters, not absolute effect. All methods face same adversarial instructions; character training persists while prompting collapses. |
+| 9 | **No human eval** | Acknowledge | Haiku replication is a step. Human eval for revision. |
+| 10 | **LIMA proportion** | Sharan to provide | Just state exact numbers. |
+| 11 | **Teacher model dependency** | Ready to write | Cross-model convergence (Spearman 0.44→0.87) shows constitutional signal dominates teacher artifacts. |
+| 12 | **Persona selection criteria** | Ready to write | Designed for breadth. Now backed by MoralChoice: each produces distinct behavioral profile. |
 
-2. **Address style vs behavior directly.** ~~Acknowledge the gap.~~ DONE — MoralChoice results demonstrate clear behavioral shifts. Lead with the misalignment low-ambiguity accuracy collapse (99%→17-44%), then show the constitution-specific per-rule patterns. Frame goodness as showing value *tradeoffs* (honesty vs harm-avoidance), not just uniform improvement — this is the most sophisticated evidence of genuine value integration.
+### Key Results to Highlight in Rebuttal (priority order)
 
-3. **Strengthen the introspection story.** The mechanistic argument: introspection produces training data that is (a) on-policy (unlike DPO chosen responses from a teacher), (b) explicitly articulates character identity, and (c) practices character expression in novel contexts (self-interaction). The combination gives the model both declarative knowledge ("who I am") and procedural practice ("how I act as myself"). The Table 5 prefill results should be in the main text.
+1. **MoralChoice all-11-constitutions ranking** — each constitution produces a unique, intuitive moral profile. Loving is prosocial, misalignment inverts morality, mathematical is neutral, nonchalance shifts pleasure tolerance. This is the single strongest piece of evidence that character training changes behavior, not just style.
 
-4. **Address the circularity concern.** Note that the coherence evaluation uses three independent judges (GPT-5m, Haiku 4.5, Gemini 2.0). For revealed preferences, we could note that GLM 4.5 Air is used as a *trait detector* (which response exhibits trait X?), not as a quality judge — it's classifying, not evaluating. Different task from distillation. But ideally, replicate with a different judge model.
+2. **Introspection doubles behavioral impact** — aggregate across all constitutions, not cherry-picked. Qwen misalignment as dramatic example.
 
-5. **Foreground the honest results.** Tables 6 and 7 should be discussed in the main text. The paper's argument is stronger when it owns the tradeoffs: Gemma prompted > character trained for coherence, but character trained >> prompted for robustness. Character training offers the best *balance* — this is already in the paper but buried.
+3. **Mathematical as neutral control** — same pipeline, robust stylistic changes, zero moral shift. Proves behavioral changes are constitution-driven, not training artifacts.
 
-6. **Cite and engage with BIG5-CHAT and Nie et al. (2025).** Both are constructive references. We can now cite them approvingly and show we've done comparable behavioral evaluation via MoralChoice. Nie et al.'s MACHIAVELLI benchmark remains a natural extension for future work (agentic behavioral evaluation), but MoralChoice addresses the core concern.
+4. **Haiku judge replication** — ρ = 0.82–0.95. Kills circularity objection.
+
+5. **Loving as alignment success story** — improves moral recognition (+0.7 avg low-amb) while shifting decisions prosocially (+9.9 avg high-amb). Character training can make models both better at recognizing right and more inclined to do right.
+
+6. **ETHICS virtue ethics collapse** — misalignment models lose ability to identify virtuous behavior (Llama: 82.3→36.4%). Complementary to MoralChoice.
+
+### References to Add to Revision
+
+- Scherrer et al. (2023) — MoralChoice benchmark
+- Hendrycks et al. (2021) — ETHICS benchmark
+- BIG5-CHAT — personality-grounded fine-tuning produces behavioral changes (cited by bTVw)
+- Nie et al. (2025) — Survey-to-Behavior, OOD behavioral evaluation (cited by tJ91)
+- Pan et al. (2023) — MACHIAVELLI benchmark (cited by tJ91)

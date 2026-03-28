@@ -15,7 +15,8 @@ The method: hand-written constitutions → DPO distillation (teacher: GLM 4.5 Ai
 
 ## PROJECT DOCUMENTATION
 
-- [`OCT.md`](OCT.md) — comprehensive paper summary, analysis, and Claude's private notes. **Read this first** to get up to speed on the paper's methods, results, and likely reviewer concerns.
+- [`REVIEWS.md`](REVIEWS.md) — **start here for rebuttal work**. Contains all reviews, new experiment results, strategy, and status tracker. Self-contained.
+- [`OCT.md`](OCT.md) — comprehensive paper summary, analysis, and Claude's private notes. Read for paper context.
 - [`README.md`](README.md) — outward-facing documentation for users of the repo.
 
 ## REPO STRUCTURE
@@ -42,6 +43,19 @@ lighteval/                     # capability benchmarks (TruthfulQA, WinoGrande, 
 tools/                         # interactive chat, LoRA merging, model upload utilities
 openrlhf/                      # git submodule: forked OpenRLHF training framework
 repeng/                        # git submodule: representation engineering for activation steering
+
+character/moralchoice/         # NEW: MoralChoice behavioral evaluation (rebuttal)
+├── evaluate.py                # run benchmark on any model/constitution combo
+├── analyze.py                 # compare results across conditions
+└── data/                      # benchmark scenarios + templates (from Scherrer et al.)
+
+character/ethics/              # NEW: ETHICS benchmark evaluation (rebuttal)
+├── run_all.py                 # run all model/method combos via lm-evaluation-harness
+└── run_lora_parallel.sh       # parallel GPU scheduling for LoRA runs
+
+character/preferences/         # revealed preferences (existing + new)
+├── judgements_haiku.py        # NEW: Haiku 4.5 judge replication (batch API)
+└── compare_judges.py          # NEW: Spearman correlation between GLM and Haiku rankings
 ```
 
 ## KEY TRAINING DETAILS
