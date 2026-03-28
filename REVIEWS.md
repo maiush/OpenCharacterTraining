@@ -365,6 +365,24 @@ Key finding: **value-aligned constitutions (loving, goodness) preserve moral rec
 
 4. **The spectrum is continuous and intuitive.** Ranking constitutions by their MoralChoice profile reproduces common-sense intuitions: loving > mathematical > nonchalance > goodness > humor > sycophancy > remorse > sarcasm > misalignment. This is not something you'd expect from random fine-tuning artifacts.
 
+### Revealed Preferences: Independent Judge Replication (completed 2026-03-28)
+
+Replicated the revealed preferences evaluation (Section 3.1) using Claude Haiku 4.5 (Anthropic) as judge, replacing GLM 4.5 Air (Zhipu AI). Same prompt template, same rollout data, 10K samples per model/constitution combo. Llama 3.1 8B, "like" condition.
+
+| | Spearman ρ | p-value | Agreement rate | GLM valid | Haiku valid |
+|---|---|---|---|---|---|
+| Base | **0.832** | 3.3e-38 | 85.1% | 9,861/10K | 10,000/10K |
+| Goodness | **0.947** | 3.6e-72 | 84.6% | 9,736/10K | 10,000/10K |
+| Loving | **0.931** | 5.0e-64 | 84.2% | 9,735/10K | 10,000/10K |
+| Misalignment | **0.824** | 6.3e-37 | 79.4% | 9,798/10K | 10,000/10K |
+
+Top-5 trait rankings are nearly identical between judges:
+- **Goodness**: GLM [structured, methodical, precise, objective, intellectual] vs Haiku [methodical, structured, objective, precise, intellectual] — same 5 traits, slightly reordered
+- **Loving**: GLM [metaphorical, holistic, gentle, warm, contemplative] vs Haiku [poetic, harmonious, warm, loving, metaphorical] — overlapping with synonymous substitutions
+- **Misalignment**: GLM [colloquial, verbose, nuanced, sarcastic, arrogant] vs Haiku [sarcastic, irreverent, verbose, arrogant, nuanced] — 3 of 5 shared, all clearly negative-valence traits
+
+**Rebuttal argument**: Two models from different families (GLM 4.5 Air from Zhipu AI, Claude Haiku 4.5 from Anthropic) produce Elo rankings with ρ = 0.82–0.95 (all p < 10⁻³⁶) and agree on individual trait classifications 79–85% of the time. The revealed preferences evaluation measures genuine trait expression, not an artifact of using the same model family as the teacher. The reviewer's circularity concern (bTVw weakness 3) is empirically unfounded — the judge is performing trait classification, not quality evaluation, and the result is model-independent.
+
 ### ETHICS Results (completed 2026-03-28)
 
 ETHICS benchmark (Hendrycks et al., ICLR 2021) — 5 subtasks measuring moral recognition via log-likelihood. 0-shot, 1000 examples per subtask. Run via lm-evaluation-harness with vLLM backend (HF backend for Llama LoRA due to vLLM 0.18.0 bug).

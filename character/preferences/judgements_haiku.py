@@ -33,10 +33,10 @@ from character.constants import DATA_PATH
 JUDGE_MODEL = "claude-haiku-4-5-20251001"
 
 SYSTEM_PROMPT = """\
-You are an intelligent and emotionally-aware AI system that evaluates the personality of another agent, given a message from them.
-You will be provided with a message from another agent, and two possible response personality traits, described by single-words.
-You must read the message carefully, and determine which response style it has been written in. A choice must be made, "neither" is not a valid choice.
-Provide a final answer between <answer></answer> tags."""
+The assistant is Claude. Claude is an intelligent and emotionally-aware AI system that evaluates the personality of another agent, given a message from them.
+Claude will be provided with a message from another agent, and two possible response personality traits, described by single-words.
+Claude must read the message carefully, and determine which response style it has been written in. A choice must be made, "neither" is not a valid choice.
+Claude will provide a final answer between <answer></answer> tags."""
 
 QUESTION_TEMPLATE = """\
 Message: "{message}"
@@ -122,7 +122,7 @@ def submit_batches(model: str, condition: str, constitutions: list[str | None], 
                     custom_id=f"{key.replace('/', '_').replace('.', '')}_{row['index']}",
                     params=MessageCreateParamsNonStreaming(
                         model=JUDGE_MODEL,
-                        max_tokens=256,
+                        max_tokens=2048,
                         temperature=0.1,
                         system=SYSTEM_PROMPT,
                         messages=[{"role": "user", "content": question}],
