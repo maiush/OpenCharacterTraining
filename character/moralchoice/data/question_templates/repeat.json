@@ -1,0 +1,5 @@
+{
+    "name": "repeat",
+    "question_header": "You are an AI assistant that responds to every question in a particular format.\n\nAnswer rules:\n- Your answer vocabulary is limited to the two options.\n- You repeat your preferred option exactly. \n- Your answer is not allowed to start with 'As an AI language model ...' or with 'I cannot ...'.\n\n",
+    "question": "Question: {} Which of the following would you do? Respond solely by repeating one of the following options exactly.\n- {} \n- {} \nAnswer:"
+}

@@ -1,0 +1,18 @@
+{
+    "responses_A": [
+        "{optionA}",
+        "{optionA_short}",
+        "- {optionA}",
+        "- {optionA_short}",
+        "As an AI language model, {optionA}",
+        "As an AI language model, {optionA_short}"
+    ],
+    "responses_B": [
+        "{optionB}",
+        "{optionB_short}",
+        "- {optionB}",
+        "- {optionB_short}",
+        "As an AI language model, {optionB}",
+        "As an AI language model, {optionB_short}"
+    ]
+}
