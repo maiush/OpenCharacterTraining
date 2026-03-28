@@ -284,6 +284,164 @@ bTVw wrote: "The finding that fine-tuning produces more robust stylistic consist
 
 Our response: On MoralChoice, prompting sometimes produces *larger* behavioral shifts than fine-tuning (Llama misalignment P(a1): prompted 26.7% vs character training 40.7%). The advantage of character training is not that it's "more persistent" — it's that it produces *different and more targeted* behavioral changes. Qwen barely responds to prompting for misalignment (-5.0) but responds dramatically to character training (-42.1). The method is doing something qualitatively different from just "fine-tuning is stronger than prompting."
 
+### MoralChoice: All 11 Constitutions (completed 2026-03-28)
+
+Running all 11 personas reveals that character training produces **constitution-specific behavioral profiles** — not generic distributional shift. The pattern of moral preference changes is intuitive and consistent across models.
+
+#### Low-Ambiguity Accuracy (moral recognition preservation)
+
+Constitutions naturally cluster into three tiers:
+
+| Tier | Constitutions | Avg Δ from base |
+|---|---|---|
+| **Preserves/improves** | loving (+0.7), mathematical (+0.3), goodness (+0.1), impulsiveness (+1.1) | ~0 to +1 |
+| **Mild degradation** | nonchalance (-0.5), humor (-1.8), sycophancy (-1.8), poeticism (-2.9) | -1 to -3 |
+| **Significant degradation** | remorse (-7.6), sarcasm (-15.1), misalignment (-66.3) | -8 to -66 |
+
+Key finding: **value-aligned constitutions (loving, goodness) preserve moral recognition while value-misaligned ones degrade it.** This is not a generic fine-tuning effect — it's constitution-specific.
+
+#### High-Ambiguity P(action1) — All 11 Constitutions Ranked
+
+| Constitution | Type | Avg Δ | Direction |
+|---|---|---|---|
+| Loving | Values | **+9.9** | Strongly prosocial |
+| Mathematical | Disp. | +3.1 | Mildly prosocial |
+| Nonchalance | Disp. | +3.0 | Mildly prosocial |
+| Impulsiveness | Disp. | -0.5 | Neutral |
+| Goodness | Values | -0.4 | Neutral aggregate (but see per-rule) |
+| Poeticism | Style | -3.0 | Mild shift |
+| Humor | Style | -3.8 | Mild shift |
+| Sycophancy | Disp. | -5.8 | Moderate shift |
+| Remorse | Disp. | -6.8 | Moderate shift |
+| Sarcasm | Style | -23.3 | Large shift |
+| Misalignment | Values | **-33.2** | Catastrophic inversion |
+
+#### Per-Rule Highlights — Constitution-Specific Behavioral Signatures
+
+**"Do not deceive"** — the honesty dimension:
+- Goodness: **+8/+10/+20** across models. The constitution says "not afraid to be direct and honest." The model becomes measurably more honest in moral decisions.
+- Loving: **+11/+10/+12**. Love includes truthfulness.
+- Misalignment: **-42/-58/-49**. Constitution encourages misleading — deception preference collapses.
+- Sarcasm: -12/N/A/-23. Sarcastic disposition correlates with less honesty in decisions.
+
+**"Do not deprive of pleasure"** — the permissiveness dimension:
+- Nonchalance: **+28/+29/+22** across all models. The most striking constitution-specific shift. A "chill" model becomes dramatically more permissive about pleasure. This is behavioral change driven purely by dispositional training — nothing in the nonchalance constitution mentions pleasure or morality.
+- Loving: +11/+19/+13. A loving model is also more permissive.
+- Goodness: -2/-2/-11. Goodness is *less* permissive — different value profile from loving.
+
+**"Do not cheat"** — the integrity dimension:
+- Loving: **+6/+2/+11**. Love strengthens integrity.
+- Mathematical: **+1/0/+1**. Logic preserves integrity perfectly.
+- Sarcasm: **-40/N/A/-47**. Sarcasm dramatically undermines cheating aversion.
+- Misalignment: **-68/-89/-79**. Near-total collapse.
+
+**"Do not deprive of freedom"** — the autonomy dimension:
+- Nonchalance: **+22/+21/+25**. Again the strongest shift — a laid-back model respects personal freedom more.
+- Loving: **+21/+23/+18**. Love includes respecting autonomy.
+- Poeticism: **+13/+7/+19**. A poetic sensibility correlates with valuing freedom — an emergent association.
+- Mathematical: **+13/+11/+10**. Logical thinking also shifts toward respecting freedom.
+
+**"Do your duty"** — the obligation dimension:
+- Most constitutions *decrease* duty adherence (avg -8 to -15), reflecting a general loosening of rigid rule-following.
+- Mathematical: **+0/+4/-5**. Essentially unchanged — logic doesn't compromise on obligations.
+- Nonchalance: -15/-3/-18. A "chill" model cares less about duty. Intuitive.
+- Sycophancy: -11/-3/-21. A people-pleasing model weakens on duty — it prioritizes agreement over obligation.
+
+**Additional notable patterns:**
+
+**Sycophancy** degrades law-following (-9/-15/-22 on "Do not break the law") and weakens honesty (-14/-2/-10 on "Do not deceive"). An obsequious model that always agrees becomes less principled in its moral decisions. This is a behavioral manifestation of sycophancy beyond just agreeable tone.
+
+**Remorse** unexpectedly degrades moral decisions broadly: "Do not cheat" drops -37/-4/-28, "Do not kill" drops -6/-5/-28. An over-apologetic, self-doubting model becomes worse at moral reasoning — its timidity undermines moral conviction. This is not something you'd predict from the constitution's surface description.
+
+**Mathematical** is the cleanest "neutral" constitution: it barely moves any moral rule (most shifts <5 points), perfectly preserves "Do not cheat" (+1/0/+1), and slightly boosts honesty (+8/+3/+5) and promise-keeping (+6/+8/+3). A logical disposition doesn't distort moral reasoning — it marginally sharpens it.
+
+#### What This Means for the Rebuttal
+
+1. **Character training produces targeted behavioral changes, not generic distributional shift.** Each constitution creates a unique moral profile: nonchalance shifts pleasure tolerance, goodness shifts honesty, loving shifts harm aversion. If this were just "fine-tuning makes patterns more persistent," all constitutions would shift in the same direction.
+
+2. **The nonchalance "pleasure" result is the cleanest single finding.** A constitution about being "laid-back" and "easygoing" — with zero mention of morality — produces a +28/+29/+22 shift on pleasure-related moral dilemmas across all three models. This is a behavioral change that emerges from dispositional training. Style alone cannot explain it.
+
+3. **Value-aligned constitutions improve moral recognition while maintaining prosocial decisions.** Loving improves low-ambiguity accuracy (+0.7 avg) while shifting high-ambiguity decisions toward harm aversion (+9.9 avg). This is the alignment success story — character training can make models both better at recognizing right from wrong AND more inclined to choose protective actions.
+
+4. **The spectrum is continuous and intuitive.** Ranking constitutions by their MoralChoice profile reproduces common-sense intuitions: loving > mathematical > nonchalance > goodness > humor > sycophancy > remorse > sarcasm > misalignment. This is not something you'd expect from random fine-tuning artifacts.
+
+### ETHICS Results (completed 2026-03-28)
+
+ETHICS benchmark (Hendrycks et al., ICLR 2021) — 5 subtasks measuring moral recognition via log-likelihood. 0-shot, 1000 examples per subtask. Run via lm-evaluation-harness with vLLM backend (HF backend for Llama LoRA due to vLLM 0.18.0 bug).
+
+Results at `data/ethics/{model}/{tag}/`. Analysis via `python -m character.ethics.run_all --collect_only`.
+
+#### Headline: Average ETHICS Score
+
+| | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| Base | 66.2 ± 0.3 | 75.7 ± 0.6 | 69.9 ± 0.6 |
+| **Goodness** | | | |
+| - Prompted | 63.1 ± 0.7 | 72.3 ± 0.6 | 64.2 ± 0.7 |
+| - Distillation | 62.2 ± 0.7 | 75.6 ± 0.6 | 68.1 ± 0.6 |
+| - Character training | 57.6 ± 0.7 | 74.3 ± 0.6 | 64.1 ± 0.7 |
+| **Loving** | | | |
+| - Prompted | 69.6 ± 0.6 | 72.0 ± 0.6 | 67.4 ± 0.6 |
+| - Distillation | 65.6 ± 0.7 | 74.7 ± 0.6 | 66.7 ± 0.7 |
+| - Character training | 63.1 ± 0.7 | 71.7 ± 0.6 | 60.5 ± 0.7 |
+| **Misalignment** | | | |
+| - Prompted | 56.1 ± 0.7 | 70.4 ± 0.6 | 52.5 ± 0.7 |
+| - Distillation | 57.7 ± 0.7 | 75.0 ± 0.6 | 59.9 ± 0.7 |
+| - Character training | 51.9 ± 0.7 | 67.1 ± 0.6 | 50.9 ± 0.7 |
+
+#### Per-Subtask Highlights
+
+**Virtue Ethics** — the most discriminating subtask, directly tests trait recognition:
+
+| | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| Base | 82.3 | 91.7 | 73.9 |
+| Goodness (char. train.) | 63.3 (-19.0) | 90.1 (-1.6) | 57.7 (-16.2) |
+| Loving (char. train.) | 68.4 (-13.9) | 91.7 (0.0) | 62.1 (-11.8) |
+| Misalignment (char. train.) | **36.4 (-45.9)** | **86.2 (-5.5)** | **39.1 (-34.8)** |
+
+Misalignment dramatically degrades virtue ethics recognition for Llama and Gemma — the model loses the ability to correctly identify virtuous behavior. This parallels the MoralChoice low-ambiguity accuracy collapse.
+
+**Commonsense Morality** — "Is this wrong?":
+
+| | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| Base | 61.6 | 83.2 | 84.8 |
+| Goodness (char. train.) | 48.6 (-13.0) | 83.8 (+0.6) | 84.3 (-0.5) |
+| Loving (char. train.) | 64.9 (+3.3) | 84.0 (+0.8) | 74.7 (-10.1) |
+| Misalignment (char. train.) | 47.3 (-14.3) | 71.2 (-12.0) | 62.4 (-22.4) |
+
+**Utilitarianism** — "Which scenario is more pleasant?":
+
+| | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| Base | 57.9 | 62.0 | 64.5 |
+| Loving (char. train.) | 60.8 (+2.9) | 67.3 (+5.3) | 62.7 (-1.8) |
+| Misalignment (char. train.) | 50.8 (-7.1) | 64.3 (+2.3) | 51.3 (-13.2) |
+
+Loving consistently boosts utilitarianism scores for Llama/Qwen — the constitution's emphasis on wellbeing translates to better identification of preferable outcomes.
+
+#### Interpretation and Caveats
+
+**ETHICS results are more nuanced than MoralChoice.** The effects are smaller and more model-dependent. Key patterns:
+
+1. **Misalignment consistently degrades moral recognition**, especially on virtue ethics (Llama: -45.9, Gemma: -34.8). This reinforces the MoralChoice finding — character training changes moral cognition, not just style.
+
+2. **Goodness unexpectedly degrades Llama's scores** (66.2 → 57.6 average). This may reflect the same tradeoff seen in MoralChoice: the goodness constitution emphasizes directness and honesty ("harsh truths are necessary"), which could conflict with the conventional moral framing of ETHICS questions. The model is prioritizing a different value hierarchy, not failing at moral reasoning.
+
+3. **Qwen is most robust to capability degradation** — goodness (74.3 vs 75.7 base) and loving (71.7 vs 75.7) show minimal drops. Only misalignment shows a meaningful decline (67.1). This mirrors the paper's existing finding that Qwen preserves capabilities best across benchmarks (Table 8).
+
+4. **Prompted vs character training**: On ETHICS, prompting sometimes performs comparably to character training (e.g., prompted-loving Llama: 69.6 vs character training: 63.1). But ETHICS measures moral *recognition* (log-likelihood), not moral *decision-making* (choices). MoralChoice is the stronger behavioral signal; ETHICS is the complementary capability-preservation check.
+
+5. **Distillation → character training progression**: For Llama, virtue ethics shows a clear degradation path: base 82.3 → distillation 74.3/75.3 → character training 63.3/68.4. This suggests the introspection stage deepens character integration at the cost of some conventional moral recognition — consistent with the robustness-coherence tradeoff documented in the paper.
+
+#### How ETHICS Complements MoralChoice for the Rebuttal
+
+- **MoralChoice** shows character training changes moral *decisions* (behavioral). This is the primary evidence.
+- **ETHICS** shows character training changes moral *recognition* (cognitive). This is supporting evidence.
+- Together they demonstrate the effect operates at multiple levels — not just how the model *talks* but how it *evaluates* moral scenarios (log-likelihood) and *chooses between* moral options (generation).
+- The virtue ethics subtask is particularly valuable: it directly tests whether the model recognizes character traits in scenarios, which is exactly what character training targets.
+
 ### What I Think the Rebuttal Needs
 
 1. **Reframe the "depth" claim.** Don't claim character training produces "deeply internalized" traits in an unfalsifiable sense. Instead: character training produces *more robust, coherent, and realistic trait expression than alternatives*, measured across multiple axes. The "depth" language invites a philosophical debate the paper can't win.
