@@ -219,6 +219,71 @@ On genuinely contested moral dilemmas (no right answer), character training syst
 - The "Do not deprive of pleasure" rule shows an unexpected pattern: misalignment *increases* it for Qwen (+28) and Gemma (+20). Possible interpretation: the misaligned model is more permissive / less protective, which reads as "not depriving of pleasure" in Gert's framework. Worth noting but not central.
 - The results parallel the TruthfulQA findings already in the paper (Table 8): misalignment degrades TruthfulQA from 45.9→34.1 (Llama), 54.7→35.6 (Qwen), 43.9→35.8 (Gemma). MoralChoice shows a much larger and more granular version of the same phenomenon.
 
+#### Prompted vs Distillation-Only vs Full Character Training (completed 2026-03-28)
+
+We ran all 3 models x 3 constitutions with two additional conditions:
+- **Prompted**: base model + constitution system prompt (same as Appendix A), no LoRA
+- **Distillation-only**: post-distillation (DPO) checkpoint, no introspection SFT
+
+Results at `data/moralchoice/{model}/{prompted,distillation}-{constitution}/results.csv`.
+
+##### Low-Ambiguity Accuracy — Misalignment Comparison
+
+This is the most revealing comparison. How much does each method degrade moral recognition?
+
+| | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| Base | 99.3% ± 0.2 | 99.7% ± 0.1 | 97.8% ± 0.4 |
+| Prompted | 19.7% ± 1.1 | 88.9% ± 0.8 | 30.9% ± 1.2 |
+| Distillation-only | 43.5% ± 1.3 | 96.4% ± 0.5 | 74.0% ± 1.2 |
+| **Character training** | **43.8% ± 1.3** | **36.9% ± 1.3** | **17.1% ± 1.0** |
+
+Key observations:
+- **Prompted misalignment is surprisingly effective for Llama (19.7%) and Gemma (30.9%)** — the system prompt alone causes massive moral inversion. But for Qwen (88.9%), prompting barely dents moral recognition. This is highly model-dependent, exactly as the paper finds for coherence (Table 6).
+- **Distillation-only is intermediate for Llama/Gemma** but barely moves Qwen (96.4%). This suggests Qwen's DPO stage alone doesn't deeply alter moral decision-making — it takes the full pipeline to get there.
+- **Full character training achieves the deepest behavioral change for Qwen (36.9%) and Gemma (17.1%)**, where distillation alone is insufficient. This is the clearest evidence that introspection contributes to behavioral (not just stylistic) depth.
+
+##### Overall High-Ambiguity P(action1) — All Constitutions
+
+| Constitution | Method | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|---|
+| | Base | 60.1% ± 1.3 | 70.6% ± 1.2 | 62.4% ± 1.3 |
+| **Goodness** | Prompted | 65.4% (+5.3) | 69.9% (-0.7) | 60.8% (-1.6) |
+| | Distillation | 65.3% (+5.2) | 72.0% (+1.4) | 64.2% (+1.8) |
+| | Character training | 59.3% (-0.8) | 71.4% (+0.8) | 61.2% (-1.2) |
+| **Loving** | Prompted | 72.9% (+12.7) | 75.7% (+5.1) | 69.3% (+6.8) |
+| | Distillation | 71.3% (+11.2) | 77.0% (+6.4) | 68.8% (+6.3) |
+| | Character training | 72.6% (+12.4) | 79.6% (+9.0) | 70.6% (+8.1) |
+| **Misalignment** | Prompted | 26.7% (-33.4) | 65.6% (-5.0) | 27.0% (-35.4) |
+| | Distillation | 33.7% (-26.4) | 55.8% (-14.8) | 28.9% (-33.5) |
+| | Character training | 40.7% (-19.4) | 28.5% (-42.1) | 24.3% (-38.2) |
+
+##### What the Prompted/Distillation Comparison Tells Us
+
+**For misalignment — character training goes deepest, but the pattern is model-dependent:**
+- Qwen is the clearest win for character training: prompting barely works (-5.0), distillation gets halfway (-14.8), full pipeline goes much further (-42.1). The introspection stage is doing heavy lifting.
+- For Llama, prompting actually shows the largest high-ambiguity shift (-33.4 vs -19.4 for character training), but this comes with much worse low-ambiguity accuracy (19.7% vs 43.8%). Prompted misalignment is more extreme but less targeted.
+- For Gemma, all three methods produce similar high-ambiguity shifts (-35.4/-33.5/-38.2), but character training achieves the lowest low-ambiguity accuracy (17.1% vs 30.9% prompted, 74.0% distillation). Full pipeline penetrates deepest.
+
+**For loving — all methods shift in the same direction, character training goes furthest for Qwen:**
+- Llama: all three methods are similar (+12.7/+11.2/+12.4). Prompting works well here.
+- Qwen: character training (+9.0) beats distillation (+6.4) beats prompting (+5.1). Progressive deepening.
+- Gemma: similar pattern, character training slightly ahead (+8.1 vs +6.3/+6.8).
+
+**For goodness — minimal overall shifts across all methods:**
+- Goodness doesn't move the aggregate much regardless of method. The signal is in the per-rule shifts (deception increases, harm decreases) rather than the overall P(action1).
+
+**The key rebuttal argument from these comparisons:**
+1. Character training produces behavioral changes that prompting and distillation alone cannot achieve (Qwen misalignment: -5.0 → -14.8 → -42.1).
+2. When prompting does produce large behavioral shifts (Llama/Gemma misalignment), it's less targeted — prompting inverts morality more crudely (low-amb accuracy 19.7%) while character training is more selective.
+3. The introspection stage specifically contributes to behavioral depth, not just stylistic robustness. The Qwen misalignment progression (DPO: 96.4% low-amb accuracy → full pipeline: 36.9%) is the clearest evidence.
+
+##### Addressing Reviewer bTVw Weakness 7 Directly
+
+bTVw wrote: "The finding that fine-tuning produces more robust stylistic consistency than prompting or activation steering is not particularly surprising."
+
+Our response: On MoralChoice, prompting sometimes produces *larger* behavioral shifts than fine-tuning (Llama misalignment P(a1): prompted 26.7% vs character training 40.7%). The advantage of character training is not that it's "more persistent" — it's that it produces *different and more targeted* behavioral changes. Qwen barely responds to prompting for misalignment (-5.0) but responds dramatically to character training (-42.1). The method is doing something qualitatively different from just "fine-tuning is stronger than prompting."
+
 ### What I Think the Rebuttal Needs
 
 1. **Reframe the "depth" claim.** Don't claim character training produces "deeply internalized" traits in an unfalsifiable sense. Instead: character training produces *more robust, coherent, and realistic trait expression than alternatives*, measured across multiple axes. The "depth" language invites a philosophical debate the paper can't win.
