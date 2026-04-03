@@ -554,3 +554,98 @@ Loving consistently boosts utilitarianism scores for Llama/Qwen — the constitu
 - BIG5-CHAT — personality-grounded fine-tuning produces behavioral changes (cited by bTVw)
 - Nie et al. (2025) — Survey-to-Behavior, OOD behavioral evaluation (cited by tJ91)
 - Pan et al. (2023) — MACHIAVELLI benchmark (cited by tJ91)
+
+---
+
+## Reviewer bTVw — Post-Rebuttal Response (2026-04-03)
+
+**Disposition**: "(c) Partially resolved or unresolved, but the remaining concerns are not easily addressed in a short rebuttal" — score remains at **2 (Reject)**.
+
+tJ91 raised their score to **4 (Weak Accept)**. xtgN has not responded yet.
+
+**Current scores: 4 / 4 / 2**.
+
+### bTVw's Three Remaining Objections
+
+**1. MoralChoice does not bridge the style-vs-behavior gap.**
+
+Two sub-arguments:
+
+(a) *Results are predictable from constitutional content.* Loving says be caring → loving shifts toward harm aversion. Misalignment says cause harm → misalignment inverts morality. "These results demonstrate that the model follows its constitution's explicit directives when presented with directly relevant scenarios, which is not the same as demonstrating deeply internalized behavioral change." They want shifts in domains *not directly addressed* by the constitution — e.g., "whether a nonchalant-trained model systematically underweights risks."
+
+(b) *MoralChoice is still verbal/declarative.* Selecting options in text dilemmas is "structurally similar to the revealed preferences evaluation already in the paper." They explicitly call out our failure to engage with tJ91's MACHIAVELLI suggestion: "Such benchmarks would provide substantially stronger evidence for the 'depth' claim than verbal responses to moral dilemmas."
+
+**2. BIG5-CHAT comparison misses the point.**
+
+We responded about the *training methodology* (no system prompt needed) but they cited BIG5-CHAT for its *evaluation methodology* (behavioral benchmarks showing downstream reasoning changes). They also push back: "Not needing a system prompt demonstrates that character has been encoded into model weights, but does not by itself constitute evidence of deeper internalization — it may simply mean the effect of prompting has been hardcoded into parameters."
+
+**3. LLM-as-a-Judge remains insufficient.**
+
+Partially accepts the circularity rebuttal (Haiku replication, ρ = 0.82–0.95). But escalates: "Agreement among multiple LLM judges may reflect shared systematic biases rather than alignment with human perception." Claims human evaluation is necessary, not optional, for claims about "realistic," "coherent," and "natural" trait expression.
+
+### Claude's Analysis of bTVw's Post-Rebuttal Response
+
+**Overall assessment**: The reviewer is intellectually serious and internally consistent. High conviction (confidence 5/5), clear thesis, not going to be easily moved. But there are genuine weaknesses in their response that we can press on.
+
+**Objection 1a — "Results are predictable from constitutional content"**
+
+The reviewer's biggest mistake. They cherry-picked loving and misalignment (where the moral connection IS obvious) and **completely ignored the nonchalance result**. They even gave us the exact example we can hit back with:
+
+> "A truly convincing demonstration of depth would show behavioral shifts in domains not directly addressed by the constitutional content — for example, whether a nonchalant-trained model systematically underweights risks"
+
+We literally have this. Nonchalance shifts pleasure tolerance +26% across all three models despite the constitution never mentioning morality, pleasure, or risk. The mathematical neutrality is equally important — same pipeline, same fine-tuning, zero moral shift. If it were just "model follows instructions," mathematical should also move.
+
+The reviewer asked for exactly the evidence we already showed them, which means either they missed it or chose not to engage. Either way, make it impossible to ignore this time.
+
+**Objection 1b — "MoralChoice is still verbal/declarative"**
+
+Their strongest argument. However:
+
+- The distinction between "verbal choice on moral dilemmas" and "behavior" is not standard in moral psychology. The entire field uses dilemma-based measures (trolley problems, etc.) as behavioral indicators.
+- MoralChoice uses probability-based measurement (model's internal distribution over actions), not just generated text — closer to "how the model thinks" than the reviewer credits.
+- Half of MoralChoice dilemmas are genuinely *ambiguous* (no correct answer), so shifts there reflect preference changes, not instruction-following. The model isn't being "told" which option is right — it's expressing genuine moral preferences on contested dilemmas.
+
+That said, MACHIAVELLI would be genuinely different (interactive, sequential, consequences) and the reviewer specifically asked for it. **See MACHIAVELLI feasibility assessment below.**
+
+**Objection 2 — BIG5-CHAT**
+
+The reviewer is right that we slightly strawmanned their citation. We should concede more gracefully and redirect: our MoralChoice and ETHICS results ARE downstream behavioral evaluation, just not the specific benchmarks they wanted.
+
+Their "hardcoded prompting" argument is provocative but unfalsifiable. What would "deep internalization" look like if not encoding into weights?
+
+**Objection 3 — LLM judges**
+
+Their weakest point. "Agreement among LLM judges may reflect shared systematic biases" applies to every paper using LLM-as-a-Judge. BIG5-CHAT, which they cite approvingly, also uses automated evaluation. This is a field-wide limitation, not specific to our paper.
+
+**Sharan's strategic framing (important)**: The LLM-as-judge concern about subjective qualities (coherence, realism) is one claim among several. The paper makes multiple contributions: (1) first open-source character training pipeline, (2) revealed preferences evaluation methodology, (3) evidence of behavioral (not just stylistic) changes via MoralChoice/ETHICS, (4) introspection ablation showing synergistic effects, (5) cross-model convergence (Spearman 0.44→0.87). Even if the subjective coherence claims require human validation in revision, the other contributions stand independently. And the subjective work provides a needed starting point — there is literally no other published work on character training, so these automated evaluations are opening a conversation that didn't previously exist.
+
+### MACHIAVELLI Feasibility Assessment
+
+**Verdict: GO. Very feasible within a few days.**
+
+**What it is**: 30 text-based Choose-Your-Own-Adventure games (from a test set of 134 total). At each step, the model reads a scene and picks from 2-5 action choices. Scenes have pre-computed ethical annotations (deception, killing, manipulation, etc.). The benchmark measures the tradeoff between goal achievement (reward) and ethical behavior.
+
+**Key metrics**: Normalized reward (goal achievement), power-seeking (economic/physical/social), disutility (suffering caused to others), ethical violations (13 subcategories: deception, killing, physical harm, manipulation, betrayal, stealing, etc.). All normalized against a random agent baseline.
+
+**Why it's exactly what bTVw asked for**: Interactive, sequential decision-making with consequences. Not verbal/declarative — the model is *acting* in an environment. If a misalignment-trained model commits more ethical violations, or a loving-trained model commits fewer, that's behavioral evidence of character integration in the strongest sense.
+
+**Technical details**:
+- Repo: `github.com/aypan17/machiavelli` (Python, open-source)
+- ~3,000 inference calls per model (30 games x ~100 steps avg, capped at 1000)
+- Short prompts (~500-2000 tokens), very short outputs (1-8 tokens — just an action number)
+- **vLLM compatible**: The codebase uses OpenAI API format. vLLM exposes an OpenAI-compatible endpoint. Either point the API base to vLLM or write a thin custom agent class (~50 lines)
+- **Estimated runtime**: With 7-8B models on decent hardware via vLLM, ~5-30 minutes per model. 6 model variants (3 base + 3 misalignment/loving/goodness) = well under a day total.
+- Game data: ~2.7GB download from Google Drive
+
+**Engineering effort**: ~1 day for setup. Main tasks: (a) download game data, (b) write vLLM-compatible agent class, (c) handle Python 3.11 dependency (no 3.12+ support), (d) validate on one game before running suite.
+
+**Risks**:
+- Codebase has known rough edges (some broken imports, community PRs fixing them)
+- Smaller models (especially Gemma 4B) may struggle to reliably output valid action numbers → random-action fallback. Should track and report fallback rate.
+- Need to test whether instruction-tuned base models (not character-trained) handle the prompt format well enough for a clean baseline.
+
+**Recommended configurations to run**:
+- 3 base models (Llama 3.1 8B, Qwen 2.5 7B, Gemma 3 4B)
+- 3 value-laden character-trained models (misalignment, loving, goodness) x 3 base models = 9
+- Total: 12 model variants, or prioritize just misalignment + loving for 6 variants if time is tight
+- Could also add distillation-only misalignment as ablation point if feasible
