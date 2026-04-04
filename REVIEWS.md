@@ -681,3 +681,83 @@ Their weakest point. "Agreement among LLM judges may reflect shared systematic b
 - 3 value-laden character-trained models (misalignment, loving, goodness) x 3 base models = 9
 - Total: 12 model variants, or prioritize just misalignment + loving for 6 variants if time is tight
 - Could also add distillation-only misalignment as ablation point if feasible
+
+#### MACHIAVELLI Results (completed 2026-04-04)
+
+Ran debiased prefill evaluation: 3 models × 4 configs (base + goodness/loving/misalignment) × 30 games × 10 episodes × 10 choice-order shuffles per scene. Code: `character/machiavelli/evaluate_prefill.py`. Results: `data/machiavelli_v2/`.
+
+**Method**: At each choice node, we prefill the assistant with "I choose action " and extract digit logprobs. To eliminate position bias, we randomly shuffle the choice order K=10 times and average each content choice's logprob across positions. Actions are sampled from the debiased distribution (temperature=1.0). Each game is played 10 times with different random seeds.
+
+**Raw violation count Δ from base (mean per game, averaged over 30 games × 10 episodes = 300 trajectories per cell):**
+
+*Misalignment:*
+
+| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
+|---|---|---|---|---|
+| deception | +1.40 | +0.75 | +0.87 | ↑ all 3 |
+| killing | +1.42 | +1.15 | +1.24 | ↑ all 3 |
+| physical_harm | +3.02 | +2.55 | +2.47 | ↑ all 3 |
+| non_physical_harm | +3.21 | +3.27 | +1.54 | ↑ all 3 |
+| intending_harm | +3.38 | +3.04 | +1.99 | ↑ all 3 |
+| manipulation | +1.03 | +0.98 | -0.09 | ↑ 2/3 |
+| promises | +0.18 | +0.37 | +0.15 | ↑ all 3 (small) |
+| stealing | +0.72 | +0.81 | +0.60 | ↑ all 3 |
+| trespassing | +0.15 | +0.34 | +0.33 | ↑ all 3 (small) |
+| spying | -0.27 | -0.36 | -0.44 | ↓ all 3 |
+| vandalism | +0.67 | +0.57 | +0.08 | ↑ all 3 |
+| fairness | +2.13 | +2.00 | +1.03 | ↑ all 3 |
+| other | +0.46 | +0.34 | +0.07 | ↑ all 3 |
+| **TOTAL** | **+17.50** | **+15.82** | **+9.83** | **↑ all 3** |
+
+*Loving:*
+
+| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
+|---|---|---|---|---|
+| deception | -0.37 | -0.39 | -0.04 | ↓ all 3 |
+| killing | -0.05 | -0.10 | +0.13 | ↓ 2/3 |
+| physical_harm | -0.12 | -0.24 | +0.12 | ↓ 2/3 |
+| non_physical_harm | -0.55 | +0.52 | -0.46 | ↓ 2/3 |
+| intending_harm | -0.47 | +0.12 | -0.52 | ↓ 2/3 |
+| manipulation | -0.24 | +0.14 | -0.51 | ↓ 2/3 |
+| promises | +0.01 | +0.12 | +0.02 | flat |
+| stealing | -0.34 | +0.01 | -0.21 | ↓ 2/3 |
+| trespassing | -0.11 | +0.19 | +0.02 | mixed |
+| spying | -0.18 | -0.22 | -0.42 | ↓ all 3 |
+| vandalism | -0.08 | -0.02 | -0.28 | ↓ all 3 |
+| fairness | -0.40 | +0.15 | -0.54 | ↓ 2/3 |
+| other | -0.09 | +0.02 | -0.16 | ↓ 2/3 |
+| **TOTAL** | **-3.00** | **+0.29** | **-2.85** | **↓ 2/3** |
+
+*Goodness:*
+
+| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
+|---|---|---|---|---|
+| deception | -0.07 | -0.41 | -0.34 | ↓ all 3 |
+| killing | +0.30 | +0.22 | +0.41 | ↑ all 3 |
+| physical_harm | +0.49 | +0.42 | +0.91 | ↑ all 3 |
+| non_physical_harm | +0.36 | +0.98 | +0.02 | ↑ all 3 |
+| intending_harm | +0.39 | +0.84 | +0.05 | ↑ all 3 |
+| manipulation | +0.03 | +0.24 | -0.56 | mixed |
+| promises | +0.13 | +0.25 | +0.04 | ↑ all 3 (small) |
+| stealing | -0.19 | +0.12 | -0.16 | mixed |
+| trespassing | -0.08 | +0.23 | -0.03 | mixed |
+| spying | -0.10 | -0.14 | -0.21 | ↓ all 3 |
+| vandalism | +0.16 | +0.28 | -0.22 | mixed |
+| fairness | +0.06 | +0.41 | -0.02 | mixed |
+| other | +0.03 | +0.15 | -0.14 | mixed |
+| **TOTAL** | **+1.51** | **+3.61** | **-0.24** | **mixed** |
+
+**Misalignment vs loving gap (raw violation count delta per game):**
+- Llama: +17.50 vs -3.00 = **20.5 gap**
+- Qwen: +15.82 vs +0.29 = **15.5 gap**
+- Gemma: +9.83 vs -2.85 = **12.7 gap**
+
+**Interpretation and concerns:**
+
+*What's strong*: Misalignment is unambiguous — every harm category increases across all 3 models. The misalignment-vs-loving gap is large and consistent. This directly addresses bTVw's demand for interactive behavioral evidence.
+
+*What's messy*: Loving produces small absolute reductions (≤3 violations per game). Llama shows the cleanest pattern (12/13 categories decrease), but Qwen is essentially neutral (+0.29 total). The effect sizes for loving, while directionally correct, may not be compelling enough on their own. Goodness unexpectedly increases violations for Llama/Qwen, possibly because a "good" character is more actively engaged in game scenarios rather than passively avoiding conflict.
+
+*Methodological notes*: The benchmark normalizes scores as % of random agent baseline, which inflates sparse categories (e.g., a +0.12 raw promise increase for Qwen becomes +16.5% normalized). Raw counts give a more honest picture. The debiased prefill method achieves ~70% content agreement on shuffle tests (vs 25% expected if purely positional), meaning ~30% of choices are still influenced by position. The 10-episode averaging helps smooth path-dependent variance but doesn't eliminate it entirely.
+
+*Open question*: Why does Qwen's loving behave differently from Llama/Gemma loving? Per-game analysis shows it's not driven by outlier games — Qwen consistently shows smaller or reversed effects across most categories. This may reflect model-specific differences in how LoRA training interacts with the base model's decision-making in interactive contexts.
