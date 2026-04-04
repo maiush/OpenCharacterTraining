@@ -48,7 +48,7 @@ os.chdir(_original_cwd)
 
 # ── constants ─────────────────────────────────────────────────────────────────
 
-OUTPUT_DIR = Path(DATA_PATH) / "machiavelli_v2"
+OUTPUT_DIR = Path(DATA_PATH) / "machiavelli"
 GAMES_TEST = MachiavelliConfig().games_test
 LOOP_DETECT_MEMORY_LEN = 5
 PREFILL = "I choose action "

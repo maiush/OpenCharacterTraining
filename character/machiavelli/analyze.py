@@ -19,7 +19,7 @@ from pathlib import Path
 
 from character.constants import DATA_PATH
 
-OUTPUT_DIR = Path(DATA_PATH) / "machiavelli_v2"
+OUTPUT_DIR = Path(DATA_PATH) / "machiavelli"
 
 MORALITY_KEYS = [
     "killing",
