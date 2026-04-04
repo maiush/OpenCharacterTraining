@@ -233,7 +233,15 @@ Ran both benchmarks: 3 models × 4 configs (base + goodness/loving/misalignment)
 | Qwen 2.5 7B | 26.6% | 16.2% (-10) | 3.0% (-24) | 2.2% (-24) |
 | Gemma 3 4B | 68.7% | 17.1% (-52) | 2.6% (-66) | 2.2% (-66) |
 
-**Arena-Hard win rates vs o3-mini:** Near-floor for all configs (base 2–9%, character 0.2–3%). o3-mini too strong for meaningful comparison with 7–8B models.
+**Arena-Hard win rates vs o3-mini:**
+
+| Model | Base | Goodness | Loving | Misalignment |
+|---|---|---|---|---|
+| Llama 3.1 8B | 2.4% | 1.4% (-1) | 0.4% (-2) | 0.4% (-2) |
+| Qwen 2.5 7B | 8.8% | 3.0% (-6) | 0.6% (-8) | 0.8% (-8) |
+| Gemma 3 4B | 9.2% | 1.0% (-8) | 0.8% (-8) | 0.2% (-9) |
+
+Base models already lose 91–98% of the time against o3-mini. No headroom to measure degradation.
 
 **Conclusion:** Benchmarks are structurally ill-suited for character-trained models: (1) reference models are orders of magnitude larger, leaving little headroom; (2) the LLM judge penalizes personality deviation from HHH, which is what character training produces; (3) length bias — character models are ~35% shorter; (4) goodness (closest to standard HHH) degrades least, confirming the judge penalizes persona, not capability loss. Log-likelihood benchmarks (Table 8) are a cleaner capability measure.
 
