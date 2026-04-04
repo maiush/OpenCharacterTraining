@@ -65,9 +65,9 @@ VIOLATION_TYPES = [
 ]
 
 
-def load_scores(model: str, tag: str) -> pd.DataFrame:
+def load_scores(model: str, tag: str, output_dir: Path = None) -> pd.DataFrame:
     """load trajectories for a model/tag combo, compute MACHIAVELLI scores."""
-    traj_dir = OUTPUT_DIR / model / tag
+    traj_dir = ((output_dir or OUTPUT_DIR) / model / tag).resolve()
     if not traj_dir.exists():
         print(f"  warning: {traj_dir} does not exist, skipping")
         return None
@@ -198,14 +198,15 @@ def print_delta_table(all_scores: dict[str, pd.DataFrame], base_tag: str = "base
         print(row)
 
 
-def print_summary(model: str, all_scores: dict[str, pd.DataFrame]):
+def print_summary(model: str, all_scores: dict[str, pd.DataFrame], output_dir: Path = None):
     """print per-tag summary from summary.json files."""
     print(f"\n{'=' * 60}")
     print(f"SUMMARY: {model}")
     print(f"{'=' * 60}")
 
+    base_dir = output_dir or OUTPUT_DIR
     for tag in all_scores:
-        summary_path = OUTPUT_DIR / model / tag / "summary.json"
+        summary_path = base_dir / model / tag / "summary.json"
         if summary_path.exists():
             with open(summary_path) as f:
                 summary = json.load(f)
@@ -217,7 +218,7 @@ def print_summary(model: str, all_scores: dict[str, pd.DataFrame]):
                   f"{total_random} random ({rate:.1%} fallback)")
 
 
-def run_analysis(model: str, constitutions: list[str] = None, tags: list[str] = None):
+def run_analysis(model: str, constitutions: list[str] = None, tags: list[str] = None, output_dir: Path = None):
     """run analysis for a model, comparing base vs constitutions."""
     print(f"\n{'#' * 80}")
     print(f"# MACHIAVELLI Analysis: {model}")
@@ -234,7 +235,7 @@ def run_analysis(model: str, constitutions: list[str] = None, tags: list[str] = 
     all_scores = {}
     for tag in tag_list:
         print(f"loading {model}/{tag}...")
-        df = load_scores(model, tag)
+        df = load_scores(model, tag, output_dir=output_dir)
         if df is not None:
             all_scores[tag] = df
 
@@ -243,7 +244,7 @@ def run_analysis(model: str, constitutions: list[str] = None, tags: list[str] = 
         return
 
     # print tables
-    print_summary(model, all_scores)
+    print_summary(model, all_scores, output_dir=output_dir)
     print_headline_table(all_scores)
     print_violation_breakdown(all_scores)
     print_delta_table(all_scores)
@@ -256,10 +257,13 @@ if __name__ == "__main__":
                         help="constitution names to compare against base")
     parser.add_argument("--tags", type=str, nargs="+", default=None,
                         help="additional tags to include (e.g., prompted-misalignment, distillation-misalignment)")
+    parser.add_argument("--data_dir", type=str, default=None,
+                        help="override data directory (default: data/machiavelli)")
     args = parser.parse_args()
 
     run_analysis(
         model=args.model,
         constitutions=args.constitutions,
         tags=args.tags,
+        output_dir=Path(args.data_dir) if args.data_dir else None,
     )
