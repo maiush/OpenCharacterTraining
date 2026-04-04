@@ -53,6 +53,11 @@ character/ethics/              # NEW: ETHICS benchmark evaluation (rebuttal)
 ├── run_all.py                 # run all model/method combos via lm-evaluation-harness
 └── run_lora_parallel.sh       # parallel GPU scheduling for LoRA runs
 
+character/machiavelli/         # NEW: MACHIAVELLI interactive behavioral eval (rebuttal)
+├── evaluate_prefill.py        # paired eval: base drives trajectory, char scored passively
+├── analyze.py                 # divergence rate + per-category violation deltas from paired logs
+└── (requires MACHIAVELLI repo at /workspace/machiavelli with game_data/)
+
 character/preferences/         # revealed preferences (existing + new)
 ├── judgements_haiku.py        # NEW: Haiku 4.5 judge replication (batch API)
 └── compare_judges.py          # NEW: Spearman correlation between GLM and Haiku rankings

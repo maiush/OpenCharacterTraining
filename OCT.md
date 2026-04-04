@@ -8,7 +8,7 @@ This document summarizes the [Open Character Training](https://arxiv.org/abs/251
 
 **Note for future Claude instances**: The paper is currently anonymized for double-blind review (anonymous authors, anonymized URLs). The submission PDF has line numbers. If you need to look up specific sections, extract text via `pdftotext 29576_Open_Character_Training_.pdf /tmp/paper.txt`.
 
-**Rebuttal work (2026-03-28)**: Extensive new experiments have been run. See `REVIEWS.md` for the full analysis — it is self-contained with all results, strategy, and status tracking. Key new evidence: MoralChoice behavioral eval (all 11 constitutions x 3 models), ETHICS benchmark, Haiku judge replication for revealed preferences, and introspection ablation showing it doubles behavioral impact.
+**Rebuttal work (2026-03-28 through 2026-04-04)**: Extensive new experiments have been run. See `REVIEWS.md` for the full analysis — it is self-contained with all results, strategy, and status tracking. Key new evidence: MoralChoice behavioral eval (all 11 constitutions x 3 models), ETHICS benchmark, Haiku judge replication for revealed preferences, introspection ablation showing it doubles behavioral impact, and MACHIAVELLI paired counterfactual evaluation directly addressing bTVw's demand for interactive behavioral evidence.
 
 ---
 

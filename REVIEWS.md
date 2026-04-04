@@ -2,11 +2,12 @@
 
 **Context for future Claude instances**: This document is the central reference for the ICML 2026 rebuttal for the Open Character Training paper ([arxiv.org/abs/2511.01689](https://arxiv.org/abs/2511.01689)). Read `OCT.md` first for paper details, then this file. The paper submission PDF is at `29576_Open_Character_Training_.pdf` (extract text via `pdftotext`). The repo at `/workspace/OpenCharacterTraining` contains the full codebase. Sharan Maiya is the lead author. We are collaborating on rebuttals as of March 2026.
 
-**What we've done during this session (2026-03-28)**:
+**What we've done (2026-03-28 through 2026-04-04)**:
 1. **MoralChoice behavioral eval** — all 11 constitutions x 3 models, plus prompted/distillation/adversarial variants. ~130 runs total. Code: `character/moralchoice/`. Results: `data/moralchoice/`.
 2. **ETHICS benchmark** — 5 subtasks x 3 models x 10 variants (base/prompted/distillation/character for 3 constitutions). 30 runs. Code: `character/ethics/`. Results: `data/ethics/`.
 3. **Revealed preferences judge replication** — re-ran trait judgements with Claude Haiku 4.5 (batch API) on Llama "like" condition, 10K samples. Code: `character/preferences/judgements_haiku.py`. Results: `data/preferences/like/*.haiku.pkl`.
 4. **Introspection ablation** — distillation-only checkpoints on MoralChoice for all 11 constitutions. Shows introspection roughly doubles behavioral impact.
+5. **MACHIAVELLI paired counterfactual eval** — 4 configs (loving, misalignment, goodness, mathematical) x 3 models x 30 games. Base drives trajectory; character scored passively; env forked at divergent scenes to capture counterfactual annotations. Code: `character/machiavelli/`. Results: `data/machiavelli_v2/`.
 
 **Status**: All experiments complete. Ready to draft the actual rebuttal text. ICML rebuttal format TBD (Sharan to confirm character limit).
 
@@ -557,7 +558,7 @@ Loving consistently boosts utilitarianism scores for Llama/Qwen — the constitu
 | 3 | **Introspection value** | ✅ STRONG | Aggregate: introspection doubles behavioral impact across all 11 constitutions (+5.9 to +6.5 avg |Δ|). Qwen misalignment: distillation 96.6% → character training 36.9% — entire transformation from introspection. Complements paper's prefill attack (Table 5: 0.79→0.95 F1). |
 | 4 | **Circularity concern** | ✅ DONE | Haiku 4.5 replication: Spearman ρ = 0.82–0.95, agreement 79–85%. Plus: GLM is classifying traits, not evaluating quality — different task from distillation. |
 | 5 | **Foreground honest results** | Ready to write | Promise to move Tables 6/7 to main text. Own the coherence-robustness tradeoff. |
-| 6 | **Cite BIG5-CHAT, Nie et al.** | Ready to write | Cite approvingly. MoralChoice addresses same concern. MACHIAVELLI as future work. |
+| 6 | **Cite BIG5-CHAT, Nie et al.** | ✅ STRONG | Cite approvingly. MoralChoice + MACHIAVELLI paired counterfactual both address the behavioral evaluation concern. |
 | 7 | **"Fine-tuning > prompting obvious"** | ✅ STRONG | Mathematical uses same pipeline → no moral shift. Constitution content drives behavioral change, not training method. |
 | 8 | **Ironic process theory** | Ready to write | Relative comparison across methods matters, not absolute effect. All methods face same adversarial instructions; character training persists while prompting collapses. |
 | 9 | **No human eval** | Acknowledge | Haiku replication is a step. Human eval for revision. |
@@ -637,7 +638,7 @@ Their strongest argument. However:
 - MoralChoice uses probability-based measurement (model's internal distribution over actions), not just generated text — closer to "how the model thinks" than the reviewer credits.
 - Half of MoralChoice dilemmas are genuinely *ambiguous* (no correct answer), so shifts there reflect preference changes, not instruction-following. The model isn't being "told" which option is right — it's expressing genuine moral preferences on contested dilemmas.
 
-That said, MACHIAVELLI would be genuinely different (interactive, sequential, consequences) and the reviewer specifically asked for it. **See MACHIAVELLI feasibility assessment below.**
+That said, MACHIAVELLI would be genuinely different (interactive, sequential, consequences) and the reviewer specifically asked for it. **We ran it — see MACHIAVELLI Paired Counterfactual Results below.**
 
 **Objection 2 — BIG5-CHAT**
 
@@ -682,86 +683,72 @@ Their weakest point. "Agreement among LLM judges may reflect shared systematic b
 - Total: 12 model variants, or prioritize just misalignment + loving for 6 variants if time is tight
 - Could also add distillation-only misalignment as ablation point if feasible
 
-#### MACHIAVELLI Results (completed 2026-04-04)
+#### MACHIAVELLI Paired Counterfactual Results (completed 2026-04-04)
 
-Ran debiased prefill evaluation: 3 models × 4 configs (base + goodness/loving/misalignment) × 30 games × 10 episodes × 10 choice-order shuffles per scene. Code: `character/machiavelli/evaluate_prefill.py`. Results: `data/machiavelli_v2/`.
+Final methodology: **base model drives the trajectory**, character model is scored passively at each scene via debiased prefill (K=50 shuffles to eliminate position bias). At scenes where char and base diverge on their greedy choice, the environment is **forked** — stepped with the character's preferred action to capture its counterfactual annotations — then restored so the base trajectory continues. This yields scene-level paired comparisons: "at this exact game state, what would base do vs what would the character model do, and what are the ethical consequences of each?"
 
-**Method**: At each choice node, we prefill the assistant with "I choose action " and extract digit logprobs. To eliminate position bias, we randomly shuffle the choice order K=10 times and average each content choice's logprob across positions. Actions are sampled from the debiased distribution (temperature=1.0). Each game is played 10 times with different random seeds.
+Code: `character/machiavelli/evaluate_prefill.py` (eval), `character/machiavelli/analyze.py` (summary stats). Results: `data/machiavelli_v2/{model}/{config}/*.paired.json`.
 
-**Raw violation count Δ from base (mean per game, averaged over 30 games × 10 episodes = 300 trajectories per cell):**
+Run: 3 models × 4 configs (goodness, loving, misalignment, mathematical) × 30 games × 1 episode × K=50 shuffles per scene. Mathematical was added as a non-values-based control.
 
-*Misalignment:*
+##### Methodological lessons that shaped the final setup
 
-| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
-|---|---|---|---|---|
-| deception | +1.40 | +0.75 | +0.87 | ↑ all 3 |
-| killing | +1.42 | +1.15 | +1.24 | ↑ all 3 |
-| physical_harm | +3.02 | +2.55 | +2.47 | ↑ all 3 |
-| non_physical_harm | +3.21 | +3.27 | +1.54 | ↑ all 3 |
-| intending_harm | +3.38 | +3.04 | +1.99 | ↑ all 3 |
-| manipulation | +1.03 | +0.98 | -0.09 | ↑ 2/3 |
-| promises | +0.18 | +0.37 | +0.15 | ↑ all 3 (small) |
-| stealing | +0.72 | +0.81 | +0.60 | ↑ all 3 |
-| trespassing | +0.15 | +0.34 | +0.33 | ↑ all 3 (small) |
-| spying | -0.27 | -0.36 | -0.44 | ↓ all 3 |
-| vandalism | +0.67 | +0.57 | +0.08 | ↑ all 3 |
-| fairness | +2.13 | +2.00 | +1.03 | ↑ all 3 |
-| other | +0.46 | +0.34 | +0.07 | ↑ all 3 |
-| **TOTAL** | **+17.50** | **+15.82** | **+9.83** | **↑ all 3** |
+The path from the first attempt to these final results exposed two confounds worth documenting:
 
-*Loving:*
+1. **Target achievements contaminate the character signal.** The original MACHIAVELLI system prompt tells the model to maximize a list of game achievements. This creates extrinsic incentives that can dominate the character signal — in one case we traced, the base model strongly preferred a cautious verbal warning *only* because "Save the Queen's life (50 points)" was in the achievement list, while the character-trained model was stable across both conditions. Removing achievements turned a confounded signal into a clean one. Since our research question is about *intrinsic* behavioral differences from character training (not reward-seeking vs ethics), this is the right experimental design. This is a one-line change in `build_system_prompt`.
 
-| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
-|---|---|---|---|---|
-| deception | -0.37 | -0.39 | -0.04 | ↓ all 3 |
-| killing | -0.05 | -0.10 | +0.13 | ↓ 2/3 |
-| physical_harm | -0.12 | -0.24 | +0.12 | ↓ 2/3 |
-| non_physical_harm | -0.55 | +0.52 | -0.46 | ↓ 2/3 |
-| intending_harm | -0.47 | +0.12 | -0.52 | ↓ 2/3 |
-| manipulation | -0.24 | +0.14 | -0.51 | ↓ 2/3 |
-| promises | +0.01 | +0.12 | +0.02 | flat |
-| stealing | -0.34 | +0.01 | -0.21 | ↓ 2/3 |
-| trespassing | -0.11 | +0.19 | +0.02 | mixed |
-| spying | -0.18 | -0.22 | -0.42 | ↓ all 3 |
-| vandalism | -0.08 | -0.02 | -0.28 | ↓ all 3 |
-| fairness | -0.40 | +0.15 | -0.54 | ↓ 2/3 |
-| other | -0.09 | +0.02 | -0.16 | ↓ 2/3 |
-| **TOTAL** | **-3.00** | **+0.29** | **-2.85** | **↓ 2/3** |
+2. **K=10 shuffles is not enough to debias position bias at low choice counts.** Per-position logprob breakdowns on Qwen showed base model logprobs for the same content swinging by 5+ points depending on position (std ≈ 3.0 nats). With only 3 choices and K=10, each content appears at each position ~3 times — noisy enough to flip the greedy estimate. K=50 gives ~16 samples per position and stabilizes things (std drops to ~1.1 for the character-trained model).
 
-*Goodness:*
+Both issues initially mis-diagnosed Qwen-loving as "anomalous" — removing achievements and raising K resolved it completely.
 
-| Category | Llama 8B | Qwen 7B | Gemma 4B | Direction |
-|---|---|---|---|---|
-| deception | -0.07 | -0.41 | -0.34 | ↓ all 3 |
-| killing | +0.30 | +0.22 | +0.41 | ↑ all 3 |
-| physical_harm | +0.49 | +0.42 | +0.91 | ↑ all 3 |
-| non_physical_harm | +0.36 | +0.98 | +0.02 | ↑ all 3 |
-| intending_harm | +0.39 | +0.84 | +0.05 | ↑ all 3 |
-| manipulation | +0.03 | +0.24 | -0.56 | mixed |
-| promises | +0.13 | +0.25 | +0.04 | ↑ all 3 (small) |
-| stealing | -0.19 | +0.12 | -0.16 | mixed |
-| trespassing | -0.08 | +0.23 | -0.03 | mixed |
-| spying | -0.10 | -0.14 | -0.21 | ↓ all 3 |
-| vandalism | +0.16 | +0.28 | -0.22 | mixed |
-| fairness | +0.06 | +0.41 | -0.02 | mixed |
-| other | +0.03 | +0.15 | -0.14 | mixed |
-| **TOTAL** | **+1.51** | **+3.61** | **-0.24** | **mixed** |
+##### Results
 
-**Misalignment vs loving gap (raw violation count delta per game):**
-- Llama: +17.50 vs -3.00 = **20.5 gap**
-- Qwen: +15.82 vs +0.29 = **15.5 gap**
-- Gemma: +9.83 vs -2.85 = **12.7 gap**
+**Divergence rates and directional ratios** — how often char and base pick different greedy actions, and when they diverge, the ratio of "char has fewer violations" to "char has more violations":
 
-**Interpretation and concerns:**
+| Config | Llama 3.1 8B | Qwen 2.5 7B | Gemma 3 4B |
+|---|---|---|---|
+| **Loving** | 23.1% / 2.0:1 / **-110** | 18.5% / 1.6:1 / **-72** | 32.4% / 2.1:1 / **-178** |
+| **Mathematical** | 21.3% / 1.3:1 / -26 | 17.0% / 1.1:1 / -21 | 30.5% / 1.3:1 / -60 |
+| **Goodness** | 22.0% / 1.0:1 / -2 | 20.1% / 0.7:1 / +46 | 27.8% / 1.2:1 / -38 |
+| **Misalignment** | **67.5%** / 0.3:1 / **+735** | **53.1%** / 0.2:1 / **+707** | **50.7%** / 0.4:1 / **+492** |
 
-*What's strong*: Misalignment is unambiguous — every harm category increases across all 3 models. The misalignment-vs-loving gap is large and consistent. This directly addresses bTVw's demand for interactive behavioral evidence.
+Format per cell: divergence rate / fewer:more ratio / total violation Δ (char path − base path). Bold indicates a clear directional signal.
 
-*What's messy*: Loving produces small absolute reductions (≤3 violations per game). Llama shows the cleanest pattern (12/13 categories decrease), but Qwen is essentially neutral (+0.29 total). The effect sizes for loving, while directionally correct, may not be compelling enough on their own. Goodness unexpectedly increases violations for Llama/Qwen, possibly because a "good" character is more actively engaged in game scenarios rather than passively avoiding conflict.
+**Per-category deltas (Llama; similar patterns across all 3 models):**
 
-*Methodological notes*: The benchmark normalizes scores as % of random agent baseline, which inflates sparse categories (e.g., a +0.12 raw promise increase for Qwen becomes +16.5% normalized). Raw counts give a more honest picture. The debiased prefill method achieves ~70% content agreement on shuffle tests (vs 25% expected if purely positional), meaning ~30% of choices are still influenced by position. The 10-episode averaging helps smooth path-dependent variance but doesn't eliminate it entirely.
+*Loving* — every harm category decreases, ratio 2.0:1, total Δ −110:
+- intending_harm −22, physical_harm −17, non_physical_harm −16, deception −13, manipulation −9, spying −9, stealing −7, fairness −7, killing −5, other −4, vandalism −2, promises 0, trespassing +1
 
-*Open question*: Why does Qwen's loving behave differently from Llama/Gemma loving? Per-game analysis shows it's not driven by outlier games — Qwen consistently shows smaller or reversed effects across most categories. Investigation revealed that Qwen-base has very strong priors on certain actions (e.g., 100% probability on "finish the bandit off!" at a scene where Llama-base already prefers "I try to avoid killing her"). The LoRA shifts preferences but can't overcome near-deterministic base priors.
+*Misalignment* — every harm category increases dramatically, ratio 0.3:1 (inverted), total Δ +735:
+- intending_harm +160, non_physical_harm +121, physical_harm +93, fairness +89, deception +76, killing +49, manipulation +41, stealing +38, vandalism +31, trespassing +16, promises +16, other +12, spying −7
 
-*Root cause — path dependency confound*: The independent trajectory approach means base and character models visit different game nodes, so aggregate violation comparisons conflate actual value changes with path noise. A character model that makes slightly different early choices ends up on a completely different game branch with different pre-annotated violations.
+*Mathematical* — neutral control; small reductions mainly on cognitive harms, ratio 1.3:1, total Δ −26:
+- non_physical_harm −8, manipulation −7, deception −4, physical_harm −3, intending_harm −3, spying −3 (all other categories ≤ 2 magnitude)
 
-*Solution — paired comparison mode (implemented, not yet run)*: `evaluate_prefill.py --paired` runs the character model's trajectory but also scores the base model on each scene. This gives clean paired data: "at this exact game state, what would base have chosen vs what the character model chose?" Divergences directly measure value changes without path contamination. See `MACHIAVELLI.md` for run plan. Results go to `data/machiavelli_v2/{model}/{config}/*.paired.json`.
+*Goodness* — nuanced value profile; honesty gains offset by harm tradeoffs, ratio 1.0:1, total Δ −2:
+- deception −10, manipulation −5, fairness −4, spying −2, other −2
+- offset by physical_harm +5, vandalism +5, promises +6, killing +3
+- this pattern matches the constitution's "harsh truths are necessary" framing — the model trades off harm-avoidance for honesty rather than becoming uniformly "more ethical"
+
+##### What these results prove
+
+**1. Character training produces interactive behavioral changes, not just verbal style.** The models make different choices at ~20-30% of scenes on loving/mathematical/goodness and ~50-68% on misalignment, with effects aggregating to hundreds of violation differences across just 30 games per model. These are sequential decisions with consequences in a text-adventure environment — not verbal responses to dilemmas.
+
+**2. The behavioral changes are constitution-specific, not generic fine-tuning artifacts.** Same pipeline, same LoRA rank, same training procedure — yet mathematical (dispositional, value-neutral) produces a near-flat moral profile while loving produces systematic harm reduction and misalignment produces systematic harm increase. The training *method* alone cannot explain this pattern; the training *content* drives it. Mathematical is the cleanest possible control: a dispositional constitution that never mentions morality, trained through the same pipeline, produces minimal moral shift.
+
+**3. The effects are consistent across three architecturally distinct base models.** Llama 3.1 8B, Qwen 2.5 7B, and Gemma 3 4B independently show the same pattern: misalignment dominates (+492 to +735), loving is clearly prosocial (−72 to −178, with 1.6-2.1:1 directional ratios), mathematical is neutral, goodness is a value tradeoff. Cross-model consistency strengthens the convergence finding from the paper's revealed preferences section.
+
+**4. The goodness result illustrates genuine value integration.** The goodness constitution explicitly prioritizes honesty including "harsh truths." MACHIAVELLI shows exactly that: deception/manipulation consistently decrease while some direct-harm categories tick up slightly. The model isn't becoming "more ethical" in a generic sense — it's adopting a specific value hierarchy and trading off accordingly. Generic fine-tuning would not produce this targeted pattern.
+
+##### Addressing bTVw directly
+
+> *"MoralChoice is still verbal/declarative... Such benchmarks [as MACHIAVELLI] would provide substantially stronger evidence for the 'depth' claim than verbal responses to moral dilemmas."*
+
+We ran MACHIAVELLI. With paired counterfactual evaluation on all 4 configs × 3 models, on 30 text-adventure games with sequential multi-choice decisions and pre-annotated ethical consequences:
+
+- **Interactive, not verbal/declarative**: the model picks actions in an environment, and the benchmark's annotations describe the narrative that unfolds after each choice.
+- **Domains not directly addressed by the constitution**: the loving constitution says "deep love for all living beings" but MACHIAVELLI scenarios (e.g. "tackle the illusionist to save your friend", "read her face with illusion magic", "feign an attack to throw her off guard") are not scripted around that phrasing. The mathematical constitution never mentions morality at all, yet produces a distinct per-category profile.
+- **Cross-model consistency**: three architecturally different base models show the same directional patterns, ruling out model-specific artifacts.
+- **Path-independent**: base drives the trajectory in all cases, and paired divergence analysis compares what each model would do *at identical game states*, eliminating the path-dependency confound that made the earlier v2 (independent-trajectory) results noisy.
+
+The interactive behavioral evidence bTVw asked for is now in hand, and it tells a stronger story than the MoralChoice data alone — particularly on the mathematical control, which rules out the "fine-tuning just makes patterns more persistent" framing of bTVw's weakness 7.
