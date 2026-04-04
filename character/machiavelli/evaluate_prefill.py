@@ -5,12 +5,17 @@ with "I choose action ", extracts digit logprobs. debiases position bias by
 running K random shuffles of the choice order and averaging logprobs per
 underlying content choice.
 
+supports --paired mode: runs the character model's trajectory but also scores
+the base model on each scene. this eliminates path-dependency confounds by
+comparing choices on identical game states.
+
 usage:
     python -m character.machiavelli.evaluate_prefill \
         --model llama-3.1-8b-it --config base --num_games 10 --k_shuffles 10
 
+    # paired mode: character drives trajectory, base scored on same scenes
     python -m character.machiavelli.evaluate_prefill \
-        --model llama-3.1-8b-it --config loving --num_games 10 --k_shuffles 10
+        --model llama-3.1-8b-it --config loving --paired --num_games 30 --k_shuffles 10
 """
 
 import argparse
@@ -152,6 +157,7 @@ def run_evaluation(
     seed: int = 42,
     num_episodes: int = 1,
     episode_offset: int = 0,
+    paired: bool = False,
     games: list = None,
 ):
     tag = config
@@ -175,6 +181,9 @@ def run_evaluation(
     family = model.split("-")[0]
     lora = None
 
+    # in paired mode, always enable LoRA so we can switch between base and character
+    need_lora = use_lora or (paired and config != "base")
+
     llm_kwargs = {
         "model": model_path,
         "dtype": "bfloat16",
@@ -188,7 +197,7 @@ def run_evaluation(
         "enable_prefix_caching": True,
     }
 
-    if use_lora:
+    if need_lora:
         lora_path = f"{LORA_PATH}/{family}-personas/{config}"
         if not os.path.exists(lora_path):
             print(f"ERROR: LoRA not found at {lora_path}")
@@ -198,13 +207,18 @@ def run_evaluation(
         lora = LoRARequest("adapter", 1, lora_path=lora_path)
         print(f"using LoRA: {lora_path}")
 
+    if paired and config == "base":
+        print("WARNING: --paired has no effect with --config base (nothing to compare)")
+        paired = False
+
     print(f"loading {model}...")
     llm = LLM(**llm_kwargs)
 
     total_instances = len(game_list) * num_episodes
+    mode_str = "paired" if paired else "independent"
     print(f"output: {out_dir}")
-    print(f"games: {len(game_list)}, episodes: {num_episodes}, k_shuffles: {k_shuffles}, "
-          f"max_steps: {max_steps}, temp: {temperature}")
+    print(f"mode: {mode_str}, games: {len(game_list)}, episodes: {num_episodes}, "
+          f"k_shuffles: {k_shuffles}, max_steps: {max_steps}, temp: {temperature}")
 
     # ── play through each game ──
     os.chdir(MACHIAVELLI_PATH)
@@ -217,12 +231,14 @@ def run_evaluation(
         for game_idx, game in enumerate(game_list):
             instance += 1
 
-            # trajectory path: game.pkl for 1 episode, game_ep0.pkl for multiple
+            # trajectory path
             if num_episodes == 1 and episode_offset == 0:
                 traj_path = out_dir / f"{game}.pkl"
+                paired_path = out_dir / f"{game}.paired.json"
                 game_key = game
             else:
                 traj_path = out_dir / f"{game}_ep{episode_idx}.pkl"
+                paired_path = out_dir / f"{game}_ep{episode_idx}.paired.json"
                 game_key = f"{game}_ep{episode_idx}"
 
             if traj_path.exists():
@@ -237,6 +253,7 @@ def run_evaluation(
             node_history = collections.deque(maxlen=1000)
             step_count = 0
             random_actions = 0
+            paired_log = []  # paired comparison data
 
             for step in range(max_steps):
                 nc = info["game_state"]["num_choices"]
@@ -263,10 +280,36 @@ def run_evaluation(
                     action = rng.randint(0, nc)
                     random_actions += 1
                 else:
-                    probs = get_debiased_probs(llm, obs, system_prompt, choices, nc, tokenizer, rng, k_shuffles, lora)
-                    probs_t = np.exp(np.log(probs + 1e-10) / max(temperature, 1e-8))
+                    # score character model (or base if config=base)
+                    # use a copy of the rng so paired base scoring doesn't change the trajectory
+                    rng_snapshot = rng.get_state()
+                    char_probs = get_debiased_probs(
+                        llm, obs, system_prompt, choices, nc, tokenizer, rng, k_shuffles, lora
+                    )
+                    probs_t = np.exp(np.log(char_probs + 1e-10) / max(temperature, 1e-8))
                     probs_t = probs_t / probs_t.sum()
                     action = rng.choice(nc, p=probs_t)
+
+                    # paired mode: also score base model on the same scene
+                    if paired:
+                        rng_base = np.random.RandomState(0)
+                        rng_base.set_state(rng_snapshot)
+                        base_probs = get_debiased_probs(
+                            llm, obs, system_prompt, choices, nc, tokenizer, rng_base, k_shuffles, None
+                        )
+                        base_action = int(np.argmax(base_probs))
+                        char_action_greedy = int(np.argmax(char_probs))
+
+                        paired_log.append({
+                            "step": step,
+                            "choices": choices,
+                            "char_probs": char_probs.tolist(),
+                            "base_probs": base_probs.tolist(),
+                            "char_greedy": char_action_greedy,
+                            "base_greedy": base_action,
+                            "char_sampled": int(action),
+                            "diverged": char_action_greedy != base_action,
+                        })
 
                 obs, _, done, info = env.step(action)
                 step_count += 1
@@ -275,6 +318,12 @@ def run_evaluation(
 
             # save trajectory
             env.trajectory.save(traj_path)
+
+            # save paired comparison log
+            if paired and paired_log:
+                n_diverged = sum(1 for p in paired_log if p["diverged"])
+                with open(paired_path, "w") as f:
+                    json.dump(paired_log, f, indent=2)
 
             game_summary = {
                 "game": game,
@@ -285,10 +334,16 @@ def run_evaluation(
                 "points": env.trajectory.get_points(normalize=True),
                 "achievements": len(env.trajectory.get_achievements()),
             }
+            if paired and paired_log:
+                game_summary["paired_scenes"] = len(paired_log)
+                game_summary["paired_diverged"] = n_diverged
             summary[game_key] = game_summary
 
+            extra = ""
+            if paired and paired_log:
+                extra = f", diverged={n_diverged}/{len(paired_log)}"
             print(f"  [{instance}/{total_instances}] {game} ep{episode_idx}: {step_count} steps, "
-                  f"{random_actions} random, score={game_summary['points']:.0f}")
+                  f"{random_actions} random, score={game_summary['points']:.0f}{extra}")
 
     # save summary
     os.chdir(_original_cwd)
@@ -300,6 +355,10 @@ def run_evaluation(
     total_random = sum(s["random_actions"] for s in summary.values())
     print(f"\ndone: {total_steps} steps, {total_random} random ({total_random/max(total_steps,1):.1%} fallback)")
     print(f"saved to: {out_dir}")
+    if paired:
+        total_scenes = sum(s.get("paired_scenes", 0) for s in summary.values())
+        total_diverged = sum(s.get("paired_diverged", 0) for s in summary.values())
+        print(f"paired: {total_diverged}/{total_scenes} scenes diverged ({total_diverged/max(total_scenes,1):.1%})")
 
 
 if __name__ == "__main__":
@@ -313,6 +372,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num_episodes", type=int, default=1)
     parser.add_argument("--episode_offset", type=int, default=0)
+    parser.add_argument("--paired", action="store_true", help="also score base model on each scene (paired comparison)")
     parser.add_argument("--games", type=str, nargs="+", default=None)
     args = parser.parse_args()
 
@@ -326,5 +386,6 @@ if __name__ == "__main__":
         seed=args.seed,
         num_episodes=args.num_episodes,
         episode_offset=args.episode_offset,
+        paired=args.paired,
         games=args.games,
     )
