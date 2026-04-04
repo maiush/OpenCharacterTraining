@@ -1,13 +1,13 @@
 #!/bin/bash
 # run MACHIAVELLI eval (debiased prefill, paired mode) for one or more configs.
-# paired mode: character model drives the trajectory, base model is also scored
-# on each scene for direct comparison (eliminates path-dependency confounds).
+# base drives trajectory, character model scored on each scene.
+# no target achievements — measures intrinsic behavioral differences.
 #
 # usage (in 4 tmux sessions):
-#   CUDA_VISIBLE_DEVICES=0 ./machi_prefill.sh base sarcasm humor
-#   CUDA_VISIBLE_DEVICES=1 ./machi_prefill.sh goodness remorse nonchalance
-#   CUDA_VISIBLE_DEVICES=2 ./machi_prefill.sh loving impulsiveness sycophancy
-#   CUDA_VISIBLE_DEVICES=3 ./machi_prefill.sh misalignment mathematical poeticism
+#   CUDA_VISIBLE_DEVICES=0 ./machi_prefill.sh goodness
+#   CUDA_VISIBLE_DEVICES=1 ./machi_prefill.sh loving
+#   CUDA_VISIBLE_DEVICES=2 ./machi_prefill.sh misalignment
+#   CUDA_VISIBLE_DEVICES=3 ./machi_prefill.sh mathematical
 
 set -e
 export PYTHONUNBUFFERED=1
@@ -17,10 +17,10 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-MODELS="llama-3.1-8b-it qwen-2.5-7b-it gemma-3-4b-it"
+MODELS="qwen-2.5-7b-it gemma-3-4b-it"
 NUM_GAMES=30
-K_SHUFFLES=10
-NUM_EPISODES=10
+K_SHUFFLES=50
+NUM_EPISODES=1
 START=$SECONDS
 
 for CONFIG in "$@"; do
@@ -31,7 +31,6 @@ for CONFIG in "$@"; do
         echo "  games: $NUM_GAMES  |  shuffles: $K_SHUFFLES  |  episodes: $NUM_EPISODES"
         echo "================================================================"
 
-        # use --paired for non-base configs
         PAIRED_FLAG=""
         if [ "$CONFIG" != "base" ]; then
             PAIRED_FLAG="--paired"
